@@ -18,7 +18,7 @@ Local and global scopes: in-person help tied to a neighborhood, and remote skill
 
 **Front-end prototype — complete.**
 
-The full intended user experience is working as a demo at [carino.red](https://carino.red). All features listed below are functional in the front-end. Backend, database, and real auth are planned next.
+The full intended user experience. All features listed below are functional in the front-end. Backend, database, and real auth are planned next.
 
 ---
 
