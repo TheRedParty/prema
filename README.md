@@ -103,12 +103,12 @@ README.md         — this file
 
 ## What's Next
 
-- [ ] Admin dashboard (planned, not started — needs its own design session)
-- [ ] Node.js / Express backend
-- [ ] PostgreSQL database and schema
-- [ ] Real auth (bcrypt, session tokens, httpOnly cookies)
-- [ ] Email verification via Resend
-- [ ] Real post creation and persistence
+- [x] Admin dashboard (planned, not started — needs its own design session)
+- [x] Node.js / Express backend
+- [x] PostgreSQL database and schema
+- [x] Real auth (bcrypt, session tokens, httpOnly cookies)
+- [x] Email verification via Resend
+- [x] Real post creation and persistence
 - [ ] Organization management
 - [ ] Notification system
 
