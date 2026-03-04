@@ -95,6 +95,7 @@ function showPage(id) {
   }
   if (id === 'board') initBoard();
   if (id === 'orgs')  initOrgs();
+  if (id === 'admin') initAdmin();
 }
 
 function toggleMenu() {
@@ -145,14 +146,20 @@ function updateNavAuth() {
         <button class="profile-dropdown-item" onclick="showPage('inbox'); closeProfileMenu()">
           Inbox <span class="inbox-badge" id="inbox-badge">2</span>
         </button>
-        <div class="profile-dropdown-divider"></div>
-        <button class="profile-dropdown-item profile-dropdown-signout" onclick="signOut()">Sign Out</button>
+        ${currentUser.is_admin ? `
+  <div class="profile-dropdown-divider"></div>
+  <button class="profile-dropdown-item" onclick="showPage('admin'); closeProfileMenu()">Admin Dashboard</button>
+` : ''}
+<div class="profile-dropdown-divider"></div>
+<button class="profile-dropdown-item profile-dropdown-signout" onclick="signOut()">Sign Out</button>
       </div>
     `;
   } else {
     wrap.innerHTML = `<button class="nav-signin-btn" onclick="openModal('signin')">Sign In</button>`;
   }
 }
+
+
 
 async function signOut() {
   try {
@@ -472,40 +479,45 @@ function buildModal(type) {
       <button class="form-submit" onclick="submitPost('offer')">Post this Ability →</button>
     `;
   }
-  if (type === 'add-org') {
+ if (type === 'add-org') {
     return `
       <div class="modal-title">Add an Organization</div>
       <p class="modal-sub">Add your mutual aid group, union, community org, or collective to the directory. Free, always.</p>
       <div class="form-field">
         <label class="form-label">Organization name</label>
-        <input type="text" class="form-input" placeholder="Name of your group">
+        <input type="text" id="org-name" class="form-input" placeholder="Name of your group">
       </div>
       <div class="form-field">
         <label class="form-label">What do you do?</label>
-        <textarea class="form-textarea" placeholder="Describe your organization and who you serve."></textarea>
+        <textarea id="org-desc" class="form-textarea" placeholder="Describe your organization and who you serve."></textarea>
+      </div>
+      <div class="form-field">
+        <label class="form-label">Your values <span style="opacity:0.5;font-weight:400;text-transform:none;letter-spacing:0">(what do you stand for?)</span></label>
+        <textarea id="org-values" class="form-textarea" placeholder="Tell us about your values and principles." rows="3"></textarea>
       </div>
       <div class="form-row">
         <div class="form-field">
-          <label class="form-label">Type</label>
-          <select class="form-select">
-            <option>Local (in-person)</option>
-            <option>Global (online)</option>
+          <label class="form-label">Scope</label>
+          <select id="org-scope" class="form-select">
+            <option value="local">Local (in-person)</option>
+            <option value="global">Global (online)</option>
           </select>
         </div>
         <div class="form-field">
           <label class="form-label">Location</label>
-          <input type="text" class="form-input" placeholder="City or 'Remote'">
+          <input type="text" id="org-location" class="form-input" placeholder="City or 'Remote'">
         </div>
       </div>
       <div class="form-field">
         <label class="form-label">Contact email</label>
-        <input type="email" class="form-input" placeholder="contact@yourorg.org">
+        <input type="email" id="org-email" class="form-input" placeholder="contact@yourorg.org">
       </div>
       <button class="form-submit" onclick="submitOrg()">Submit Organization →</button>
     `;
   }
   return '';
 }
+
 
 function catOptionsHTML(tab) {
   const cats = tab === 'global'
@@ -565,9 +577,48 @@ async function submitPost(kind) {
   }
 }
 
-function submitOrg() {
-  closeModal();
-  showToast('★ Organization submitted — we\'ll review it shortly.');
+async function submitOrg() {
+  const name        = document.getElementById('org-name')?.value.trim();
+  const description = document.getElementById('org-desc')?.value.trim();
+  const scope       = document.getElementById('org-scope')?.value;
+  const location    = document.getElementById('org-location')?.value.trim();
+  const email       = document.getElementById('org-email')?.value.trim();
+  const values      = document.getElementById('org-values')?.value.trim();
+
+  if (!name || !description || !scope) {
+    showToast('Please fill in all required fields.');
+    return;
+  }
+
+  try {
+    const res = await fetch(`${API}/orgs/request`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      credentials: 'include',
+      body: JSON.stringify({
+        name,
+        description,
+        scope,
+        location,
+        contact_email: email,
+        values_statement: values
+      })
+    });
+
+    const data = await res.json();
+
+    if (!res.ok) {
+      showToast(data.error || 'Could not submit request.');
+      return;
+    }
+
+    closeModal();
+    showToast('★ Organization submitted — we\'ll review it shortly.');
+
+  } catch (err) {
+    console.error('Submit org error:', err);
+    showToast('Could not connect to server.');
+  }
 }
 
 
@@ -1268,6 +1319,254 @@ async function rsvpEvent(orgId, eventId, btn) {
   } catch (err) {
     console.error('RSVP error:', err);
     showToast('Could not connect to server.');
+  }
+}
+
+
+/* ══════════════════════════════════════
+   ADMIN DASHBOARD
+══════════════════════════════════════ */
+let adminTab = 'reports';
+
+function switchAdminTab(tab, btn) {
+  adminTab = tab;
+  document.querySelectorAll('.admin-tab').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('.admin-panel').forEach(p => p.classList.add('admin-panel-hidden'));
+  btn.classList.add('active');
+  document.getElementById(`admin-panel-${tab}`)?.classList.remove('admin-panel-hidden');
+  loadAdminTab(tab);
+}
+
+async function loadAdminTab(tab) {
+  if (tab === 'reports') loadAdminReports();
+  if (tab === 'users') loadAdminUsers();
+  if (tab === 'orgs') loadAdminOrgs();
+}
+
+async function initAdmin() {
+  try {
+    const res = await fetch(`${API}/admin/stats`, {
+      credentials: 'include'
+    });
+    const data = await res.json();
+
+    if (data.pendingReports > 0) {
+      document.getElementById('admin-reports-badge').textContent = data.pendingReports;
+    }
+    if (data.pendingOrgs > 0) {
+      document.getElementById('admin-orgs-badge').textContent = data.pendingOrgs;
+    }
+  } catch (err) {
+    console.error('Admin stats error:', err);
+  }
+
+  loadAdminReports();
+}
+
+async function loadAdminReports() {
+  try {
+    const res = await fetch(`${API}/admin/reports`, {
+      credentials: 'include'
+    });
+    const data = await res.json();
+
+    const list = document.getElementById('admin-reports-list');
+
+    if (!data.reports.length) {
+      list.innerHTML = '<p class="admin-empty">No pending reports.</p>';
+      return;
+    }
+
+    list.innerHTML = data.reports.map(r => `
+      <div class="admin-report-card">
+        <div class="admin-report-header">
+          <span class="admin-report-type">${r.content_type}</span>
+          <span class="admin-report-id">ID: ${r.content_id}</span>
+          <span class="admin-report-date">${new Date(r.created_at).toLocaleDateString()}</span>
+        </div>
+        <div class="admin-report-reason"><strong>Reason:</strong> ${r.reason}</div>
+        ${r.other_text ? `<div class="admin-report-note">${r.other_text}</div>` : ''}
+        <div class="admin-report-reporter">Reported by: ${r.reporter_name || r.reporter_username}</div>
+        <div class="admin-report-actions">
+          <button class="admin-btn admin-btn-dismiss" onclick="resolveReport(${r.id}, 'dismissed')">Dismiss</button>
+          <button class="admin-btn admin-btn-remove" onclick="resolveReport(${r.id}, 'actioned')">Remove Content</button>
+          ${r.content_type === 'post' ? `<button class="admin-btn admin-btn-view" onclick="viewReportedPost(${r.content_id})">View Post</button>` : ''}
+        </div>
+      </div>
+    `).join('');
+
+  } catch (err) {
+    console.error('Load reports error:', err);
+  }
+}
+
+async function resolveReport(reportId, action) {
+  try {
+    const res = await fetch(`${API}/admin/reports/${reportId}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      credentials: 'include',
+      body: JSON.stringify({ action })
+    });
+
+    if (res.ok) {
+      showToast(action === 'dismissed' ? 'Report dismissed.' : 'Content removed.');
+      loadAdminReports();
+    }
+  } catch (err) {
+    console.error('Resolve report error:', err);
+  }
+}
+
+async function loadAdminUsers() {
+  const q = document.getElementById('admin-user-search')?.value.trim();
+
+  try {
+    const params = new URLSearchParams();
+    if (q) params.append('q', q);
+
+    const res = await fetch(`${API}/admin/users?${params}`, {
+      credentials: 'include'
+    });
+    const data = await res.json();
+
+    const list = document.getElementById('admin-users-list');
+
+    if (!data.users.length) {
+      list.innerHTML = '<p class="admin-empty">No users found.</p>';
+      return;
+    }
+
+    list.innerHTML = data.users.map(u => `
+      <div class="admin-user-card ${u.is_banned ? 'admin-user-banned' : ''}">
+        <div class="admin-user-info">
+          <div class="admin-user-name">${u.display_name || u.username} <span class="admin-user-handle">@${u.username}</span></div>
+          <div class="admin-user-email">${u.email}</div>
+          <div class="admin-user-meta">
+            ${u.is_admin ? '<span class="admin-badge">Admin</span>' : ''}
+            ${u.is_banned ? `<span class="banned-badge">Banned — ${u.ban_reason || 'no reason given'}</span>` : ''}
+            Joined ${new Date(u.created_at).toLocaleDateString()}
+          </div>
+        </div>
+        <div class="admin-user-actions">
+          <button class="admin-btn admin-btn-view" onclick="viewProfile('${u.username}')">View Profile</button>
+          ${u.is_banned
+            ? `<button class="admin-btn admin-btn-approve" onclick="unbanUser(${u.id})">Unban</button>`
+            : `<button class="admin-btn admin-btn-remove" onclick="banUser(${u.id}, '${u.username}')">Ban</button>`
+          }
+        </div>
+      </div>
+    `).join('');
+
+  } catch (err) {
+    console.error('Load users error:', err);
+  }
+}
+
+function searchAdminUsers() {
+  loadAdminUsers();
+}
+
+async function banUser(userId, username) {
+  const reason = prompt(`Reason for banning @${username}?`);
+  if (!reason) return;
+
+  try {
+    const res = await fetch(`${API}/admin/users/${userId}/ban`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      credentials: 'include',
+      body: JSON.stringify({ reason })
+    });
+
+    if (res.ok) {
+      showToast(`@${username} has been banned.`);
+      loadAdminUsers();
+    }
+  } catch (err) {
+    console.error('Ban user error:', err);
+  }
+}
+
+async function unbanUser(userId) {
+  try {
+    const res = await fetch(`${API}/admin/users/${userId}/unban`, {
+      method: 'POST',
+      credentials: 'include'
+    });
+
+    if (res.ok) {
+      showToast('User unbanned.');
+      loadAdminUsers();
+    }
+  } catch (err) {
+    console.error('Unban user error:', err);
+  }
+}
+
+async function loadAdminOrgs() {
+  try {
+    const res = await fetch(`${API}/admin/org-requests`, {
+      credentials: 'include'
+    });
+    const data = await res.json();
+
+    const list = document.getElementById('admin-orgs-list');
+
+    if (!data.requests.length) {
+      list.innerHTML = '<p class="admin-empty">No pending org requests.</p>';
+      return;
+    }
+
+    list.innerHTML = data.requests.map(r => `
+      <div class="admin-org-card">
+        <div class="admin-org-name">${r.name}</div>
+        <div class="admin-org-meta">${r.scope} · Submitted by ${r.display_name || r.username} on ${new Date(r.created_at).toLocaleDateString()}</div>
+        <div class="admin-org-desc">${r.description}</div>
+        ${r.values_statement ? `<div class="admin-org-values"><strong>Values:</strong> ${r.values_statement}</div>` : ''}
+        ${r.website ? `<div class="admin-org-website"><strong>Website:</strong> ${r.website}</div>` : ''}
+        ${r.contact_email ? `<div class="admin-org-contact"><strong>Contact:</strong> ${r.contact_email}</div>` : ''}
+        <div class="admin-report-actions">
+          <button class="admin-btn admin-btn-approve" onclick="approveOrg(${r.id})">Approve</button>
+          <button class="admin-btn admin-btn-remove" onclick="rejectOrg(${r.id})">Reject</button>
+        </div>
+      </div>
+    `).join('');
+
+  } catch (err) {
+    console.error('Load org requests error:', err);
+  }
+}
+
+async function approveOrg(requestId) {
+  try {
+    const res = await fetch(`${API}/admin/org-requests/${requestId}/approve`, {
+      method: 'POST',
+      credentials: 'include'
+    });
+
+    if (res.ok) {
+      showToast('Organization approved.');
+      loadAdminOrgs();
+    }
+  } catch (err) {
+    console.error('Approve org error:', err);
+  }
+}
+
+async function rejectOrg(requestId) {
+  try {
+    const res = await fetch(`${API}/admin/org-requests/${requestId}/reject`, {
+      method: 'POST',
+      credentials: 'include'
+    });
+
+    if (res.ok) {
+      showToast('Request rejected.');
+      loadAdminOrgs();
+    }
+  } catch (err) {
+    console.error('Reject org error:', err);
   }
 }
 

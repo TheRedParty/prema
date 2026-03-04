@@ -184,6 +184,57 @@
 ══════════════════════════════════════ -->
 <div class="page" id="page-org-detail"></div>
 
+<!-- ══════════════════════════════════════
+     ADMIN DASHBOARD
+══════════════════════════════════════ -->
+<div class="page" id="page-admin">
+
+  <div class="page-hero-sm">
+    <div class="page-hero-inner">
+      <div class="page-hero-eyebrow">★ Admin</div>
+      <h1 class="page-hero-title">Moderation <em>Dashboard</em></h1>
+    </div>
+  </div>
+
+  <div class="admin-shell">
+
+    <div class="admin-tabs">
+      <button class="admin-tab active" onclick="switchAdminTab('reports', this)">
+        Reports <span class="admin-tab-badge" id="admin-reports-badge"></span>
+      </button>
+      <button class="admin-tab" onclick="switchAdminTab('users', this)">Users</button>
+      <button class="admin-tab" onclick="switchAdminTab('orgs', this)">Org Requests <span class="admin-tab-badge" id="admin-orgs-badge"></span></button>
+    </div>
+
+    <div class="admin-panel" id="admin-panel-reports">
+      <div id="admin-reports-list"></div>
+    </div>
+
+    <div class="admin-panel admin-panel-hidden" id="admin-panel-users">
+      <div class="admin-search-wrap">
+        <input type="text" id="admin-user-search" class="form-input" placeholder="Search users by name, username, or email…" oninput="searchAdminUsers()">
+      </div>
+      <div id="admin-users-list"></div>
+    </div>
+
+    <div class="admin-panel admin-panel-hidden" id="admin-panel-orgs">
+      <div id="admin-orgs-list"></div>
+    </div>
+
+  </div>
+
+  <footer class="site-footer">
+    <div class="footer-inner">
+      <div class="footer-logo">Cariño</div>
+      <div class="footer-mid"><span>Tenderness in action.</span></div>
+      <div class="footer-party">Brought to you by <a href="https://theparty.red" target="_blank">The Red Party</a></div>
+    </div>
+  </footer>
+
+</div><!-- /page-admin -->
+
+
+
 
 <!-- ══════════════════════════════════════
      ABOUT PAGE

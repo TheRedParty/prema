@@ -12,6 +12,7 @@ const postRoutes = require('./routes/posts');
 const messageRoutes = require('./routes/messages');
 const userRoutes = require('./routes/users');
 const orgRoutes = require('./routes/orgs');
+const adminRoutes = require('./routes/admin');
 
 
 // Middleware
@@ -36,6 +37,8 @@ app.use('/api/posts', postRoutes);
 app.use('/api', messageRoutes);
 app.use('/api/users', userRoutes);
 app.use('/api/orgs', orgRoutes);
+app.use('/api/admin', adminRoutes);
+
 
 // Health check
 app.get('/api/health', (req, res) => {
