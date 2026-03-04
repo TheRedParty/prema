@@ -3,6 +3,10 @@
    carino.red · Mutual Aid Tool by The Red Party
    ============================================================ */
 
+/* ── API ── */
+const API = 'http://localhost:3000/api';
+
+
 /* ── CHAIN BUTTON ── */
 function buildChains() {
   const left  = document.getElementById('chain-left');
@@ -137,7 +141,7 @@ function updateNavAuth() {
           </div>
         </div>
         <div class="profile-dropdown-divider"></div>
-        <button class="profile-dropdown-item" onclick="showPage('profile'); closeProfileMenu()">My Profile</button>
+        <button class="profile-dropdown-item" onclick="viewProfile('${currentUser.username}'); closeProfileMenu()">My Profile</button>
         <button class="profile-dropdown-item" onclick="showPage('inbox'); closeProfileMenu()">
           Inbox <span class="inbox-badge" id="inbox-badge">2</span>
         </button>
@@ -150,7 +154,16 @@ function updateNavAuth() {
   }
 }
 
-function signOut() {
+async function signOut() {
+  try {
+    await fetch(`${API}/auth/signout`, {
+      method: 'POST',
+      credentials: 'include'
+    });
+  } catch (err) {
+    console.error('Signout error:', err);
+  }
+
   loggedIn = false;
   currentUser = null;
   closeProfileMenu();
@@ -177,16 +190,45 @@ function buildSignInModal() {
   `;
 }
 
-function submitSignIn() {
+async function submitSignIn() {
   const email = document.getElementById('signin-email')?.value.trim();
   const pass  = document.getElementById('signin-password')?.value.trim();
   if (!email || !pass) { showToast('Please fill in both fields.'); return; }
-  loggedIn = true;
-  currentUser = { name: 'Alex M.', location: 'Northside, DC', bio: 'Retired electrician. Tools, time, and a truck.' };
-  closeModal();
-  updateNavAuth();
-  showToast('Welcome back, ' + currentUser.name.split(' ')[0] + '.');
-  if (pendingAction) { const fn = pendingAction; pendingAction = null; setTimeout(fn, 250); }
+
+  try {
+    const res = await fetch(`${API}/auth/signin`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      credentials: 'include',
+      body: JSON.stringify({ email, password: pass })
+    });
+
+    const data = await res.json();
+
+    if (!res.ok) {
+      showToast(data.error || 'Could not sign in.');
+      return;
+    }
+
+    loggedIn = true;
+    currentUser = {
+      id: data.user.id,
+      name: data.user.display_name || data.user.username,
+      username: data.user.username,
+      location: data.user.location,
+      bio: data.user.bio,
+      is_admin: data.user.is_admin
+    };
+
+    closeModal();
+    updateNavAuth();
+    showToast('Welcome back, ' + currentUser.name.split(' ')[0] + '.');
+    if (pendingAction) { const fn = pendingAction; pendingAction = null; setTimeout(fn, 250); }
+
+  } catch (err) {
+    console.error('Signin error:', err);
+    showToast('Could not connect to server.');
+  }
 }
 
 let signupData = {};
@@ -276,6 +318,7 @@ function signupNext(step) {
     if (!username || !email || !password) { showToast('Please fill in all fields.'); return; }
     signupData.username = username;
     signupData.email    = email;
+    signupData.password = password;
   }
   if (step === 2) {
     signupData.displayname = document.getElementById('su-displayname')?.value.trim() || signupData.username;
@@ -287,19 +330,77 @@ function signupNext(step) {
     if (!intent) { showToast('Choose what brings you here.'); return; }
     signupData.intent = intent.value;
   }
+  if (step === 4) {
+    submitSignUp();
+    return;
+  }
   document.getElementById('modal-body').innerHTML = buildSignUpModal(step + 1);
 }
 
-function signupFinish() {
-  loggedIn = true;
-  currentUser = {
-    name:     signupData.displayname || signupData.username,
-    location: signupData.location,
-    bio:      signupData.bio
-  };
-  closeModal();
-  updateNavAuth();
-  showToast('Welcome, ' + currentUser.name.split(' ')[0] + '. You\'re in.');
+async function submitSignUp() {
+  try {
+    const res = await fetch(`${API}/auth/signup`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      credentials: 'include',
+      body: JSON.stringify({
+        username:     signupData.username,
+        email:        signupData.email,
+        password:     signupData.password,
+        display_name: signupData.displayname,
+        location:     signupData.location,
+        bio:          signupData.bio,
+        intent:       signupData.intent
+      })
+    });
+
+    const data = await res.json();
+
+    if (!res.ok) {
+      showToast(data.error || 'Could not create account.');
+      return;
+    }
+
+    closeModal();
+    showToast('Account created! Check your email to verify your account.');
+
+  } catch (err) {
+    console.error('Signup error:', err);
+    showToast('Could not connect to server.');
+  }
+}
+
+async function signupFinish() {
+  try {
+    const res = await fetch(`${API}/auth/signup`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      credentials: 'include',
+      body: JSON.stringify({
+        username:     signupData.username,
+        email:        signupData.email,
+        password:     signupData.password,
+        display_name: signupData.displayname,
+        location:     signupData.location,
+        bio:          signupData.bio,
+        intent:       signupData.intent
+      })
+    });
+
+    const data = await res.json();
+
+    if (!res.ok) {
+      showToast(data.error || 'Could not create account.');
+      return;
+    }
+
+    closeModal();
+    showToast('Account created! Check your email to verify before signing in.');
+
+  } catch (err) {
+    console.error('Signup error:', err);
+    showToast('Could not connect to server.');
+  }
 }
 
 /* ── MODAL ── */
@@ -327,20 +428,20 @@ function buildModal(type) {
       <p class="modal-sub">Tell the community what you need. No judgment. No means test. You need it — that's enough.</p>
       <div class="form-field">
         <label class="form-label">What do you need?</label>
-        <input type="text" class="form-input" placeholder="e.g. Grocery run, Legal advice, Someone to talk to">
+        <input type="text" id="need-title" class="form-input" placeholder="e.g. Grocery run, Legal advice, Someone to talk to">
       </div>
       <div class="form-field">
         <label class="form-label">Tell us more</label>
-        <textarea class="form-textarea" placeholder="Describe what you need and when. As much or as little as you want."></textarea>
+        <textarea id="need-body" class="form-textarea" placeholder="Describe what you need and when. As much or as little as you want."></textarea>
       </div>
       <div class="form-row">
         <div class="form-field">
           <label class="form-label">Category</label>
-          <select class="form-select">${catOptionsHTML(currentTab)}</select>
+          <select id="need-cat" class="form-select">${catOptionsHTML(currentTab)}</select>
         </div>
         <div class="form-field">
           <label class="form-label">Your neighborhood or city</label>
-          <input type="text" class="form-input" placeholder="${currentTab === 'local' ? 'e.g. Northside, DC' : 'Remote'}">
+          <input type="text" id="need-location" class="form-input" placeholder="${currentTab === 'local' ? 'e.g. Northside, DC' : 'Remote'}">
         </div>
       </div>
       <button class="form-submit" onclick="submitPost('need')">Post this Need →</button>
@@ -352,20 +453,20 @@ function buildModal(type) {
       <p class="modal-sub">What can you give? Your time, your skill, your care — offered directly to someone who needs it.</p>
       <div class="form-field">
         <label class="form-label">What can you offer?</label>
-        <input type="text" class="form-input" placeholder="e.g. Rides, Cooking, Web design, Tutoring, A listening ear">
+        <input type="text" id="offer-title" class="form-input" placeholder="e.g. Rides, Cooking, Web design, Tutoring, A listening ear">
       </div>
       <div class="form-field">
         <label class="form-label">Tell us more</label>
-        <textarea class="form-textarea" placeholder="Describe what you can do and how you can help. Be specific — it helps people know if you're the right fit."></textarea>
+        <textarea id="offer-body" class="form-textarea" placeholder="Describe what you can do and how you can help. Be specific — it helps people know if you're the right fit."></textarea>
       </div>
       <div class="form-row">
         <div class="form-field">
           <label class="form-label">Category</label>
-          <select class="form-select">${catOptionsHTML(currentTab)}</select>
+          <select id="offer-cat" class="form-select">${catOptionsHTML(currentTab)}</select>
         </div>
         <div class="form-field">
           <label class="form-label">Your neighborhood or city</label>
-          <input type="text" class="form-input" placeholder="${currentTab === 'local' ? 'e.g. East End, Richmond' : 'Remote'}">
+          <input type="text" id="offer-location" class="form-input" placeholder="${currentTab === 'local' ? 'e.g. East End, Richmond' : 'Remote'}">
         </div>
       </div>
       <button class="form-submit" onclick="submitPost('offer')">Post this Ability →</button>
@@ -413,14 +514,57 @@ function catOptionsHTML(tab) {
   return cats.map(c => `<option>${c}</option>`).join('');
 }
 
-function submitPost(kind) {
-  if (!loggedIn) { closeModal(); setTimeout(() => requireAuth(() => openModal(kind === 'need' ? 'post-need' : 'post-offer')), 100); return; }
-  closeModal();
-  showToast(kind === 'need'
-    ? '★ Your need has been posted.'
-    : '★ Your ability has been posted.'
-  );
+async function submitPost(kind) {
+  if (!loggedIn) { 
+    closeModal(); 
+    setTimeout(() => requireAuth(() => openModal(kind === 'need' ? 'post-need' : 'post-offer')), 100); 
+    return; 
+  }
+
+  const isNeed = kind === 'need';
+  const title    = document.getElementById(isNeed ? 'need-title'    : 'offer-title')?.value.trim();
+  const body     = document.getElementById(isNeed ? 'need-body'     : 'offer-body')?.value.trim();
+  const category = document.getElementById(isNeed ? 'need-cat'      : 'offer-cat')?.value;
+  const scope = currentTab === 'local' ? 'local' : 'global';
+  const location = document.getElementById(isNeed ? 'need-location' : 'offer-location')?.value.trim();
+
+  if (!title || !body || !category || !scope) {
+    showToast('Please fill in all required fields.');
+    return;
+  }
+
+  try {
+    const res = await fetch(`${API}/posts`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      credentials: 'include',
+      body: JSON.stringify({
+        type: isNeed ? 'need' : 'ability',
+        scope,
+        category,
+        title,
+        body,
+        location
+      })
+    });
+
+    const data = await res.json();
+
+    if (!res.ok) {
+      showToast(data.error || 'Could not create post.');
+      return;
+    }
+
+    closeModal();
+    showToast(isNeed ? '★ Your need has been posted.' : '★ Your ability has been posted.');
+    fetchAndRenderCards();
+
+  } catch (err) {
+    console.error('Submit post error:', err);
+    showToast('Could not connect to server.');
+  }
 }
+
 function submitOrg() {
   closeModal();
   showToast('★ Organization submitted — we\'ll review it shortly.');
@@ -619,7 +763,7 @@ let boardReady    = false;
 const rsvpSet = new Set(); // event ids the current user has RSVP'd to
 
 /* ── REPORT SYSTEM ── */
-function openReport(contentType, contentLabel) {
+function openReport(contentType, contentId, contentLabel) {
   requireAuth(() => {
     const body = `
       <div class="modal-title">Report</div>
@@ -639,7 +783,7 @@ function openReport(contentType, contentLabel) {
         <label class="form-label">Tell us more</label>
         <textarea class="form-textarea" id="report-other-text" placeholder="Describe what's wrong." rows="3"></textarea>
       </div>
-      <button class="form-submit" onclick="submitReport()">Submit Report →</button>
+      <button class="form-submit" onclick="submitReport('${contentType}', ${contentId})">Submit Report →</button>
     `;
     document.getElementById('modal-body').innerHTML = body;
     document.getElementById('overlay').classList.add('open');
@@ -652,11 +796,39 @@ function openReport(contentType, contentLabel) {
   });
 }
 
-function submitReport() {
+async function submitReport(contentType, contentId) {
   const reason = document.querySelector('input[name="report-reason"]:checked');
   if (!reason) { showToast('Please select a reason.'); return; }
-  closeModal();
-  showToast('Report submitted. Moderators will review it.');
+
+  const otherText = document.getElementById('report-other-text')?.value.trim();
+
+  try {
+    let url;
+    if (contentType === 'post') url = `${API}/posts/${contentId}/report`;
+    if (contentType === 'profile') url = `${API}/users/${contentId}/report`;
+    if (contentType === 'org') url = `${API}/orgs/${contentId}/report`;
+
+    const res = await fetch(url, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      credentials: 'include',
+      body: JSON.stringify({ reason: reason.value, other_text: otherText })
+    });
+
+    const data = await res.json();
+
+    if (!res.ok) {
+      showToast(data.error || 'Could not submit report.');
+      return;
+    }
+
+    closeModal();
+    showToast('Report submitted. Moderators will review it.');
+
+  } catch (err) {
+    console.error('Report error:', err);
+    showToast('Could not connect to server.');
+  }
 }
 
 
@@ -714,7 +886,7 @@ function initBoard() {
   boardReady = true;
   renderSidebar();
   renderFilters();
-  renderCards();
+  fetchAndRenderCards();
 }
 
 function switchTab(tab) {
@@ -736,7 +908,7 @@ function switchTab(tab) {
 
   renderSidebar();
   renderFilters();
-  renderCards();
+  fetchAndRenderCards();
 }
 
 function renderSidebar() {
@@ -761,7 +933,45 @@ function renderFilters() {
 function setFilter(f) {
   currentFilter = f;
   renderFilters();
-  renderCards();
+  fetchAndRenderCards();
+}
+
+async function fetchAndRenderCards() {
+  const search = (document.getElementById('board-search')?.value || '').trim();
+  const sort   = document.getElementById('board-sort')?.value || 'all';
+
+  const params = new URLSearchParams();
+  params.append('scope', currentTab === 'local' ? 'local' : 'global');
+  if (currentFilter !== 'all') params.append('category', currentFilter);
+  if (sort === 'offers') params.append('type', 'ability');
+  if (sort === 'needs')  params.append('type', 'need');
+  if (search) params.append('q', search);
+
+  try {
+    const res = await fetch(`${API}/posts?${params}`);
+    const data = await res.json();
+
+    const posts = data.posts.map(p => ({
+      id:    p.id,
+      user_id: p.user_id,
+      username: p.username,
+      type:  p.type === 'ability' ? 'offer' : 'need',
+      cat:   p.category,
+      title: p.title,
+      body:  p.body,
+      name:  p.display_name || p.username,
+      loc:   p.user_location || p.location || 'Unknown',
+      time:  new Date(p.created_at).toLocaleDateString()
+    }));
+
+    boardData[currentTab] = posts;
+    renderCards();
+
+  } catch (err) {
+    console.error('Failed to fetch posts:', err);
+    document.getElementById('cards-grid').innerHTML =
+      '<div class="no-results">Could not load posts. Is the server running?</div>';
+  }
 }
 
 function renderCards() {
@@ -793,10 +1003,10 @@ function renderCards() {
       <div class="card-title">${p.title}</div>
       <div class="card-body">${p.body}</div>
       <div class="card-footer">
-        <div class="card-meta"><span class="card-name" onclick="openProfileModal('${p.name}', '${p.loc}', 'Member of the Cariño community.', ${Math.floor(Math.random()*10)+1}, ${Math.floor(Math.random()*8)})">${p.name}</span> · ${p.loc}</div>
+        <div class="card-meta"><span class="card-name" onclick="openProfileModal('${p.username}')">${p.name}</span>
         <div class="card-actions">
-          <button class="card-report-btn" onclick="openReport('post','${p.title}')" title="Report this post">⚑</button>
-          <button class="card-cta" onclick="respondToPost('${p.name}', '${p.title}')">Respond</button>
+          <button class="card-report-btn" onclick="openReport('post', ${p.id}, '${p.title}')" title="Report this post">⚑</button>
+          <button class="card-cta" onclick="respondToPost(${p.user_id}, '${p.name}', '${p.title}')">Respond</button>
         </div>
       </div>
     </div>
@@ -813,7 +1023,7 @@ let orgsReady = false;
 function initOrgs() {
   if (orgsReady) return;
   orgsReady = true;
-  renderOrgs();
+  fetchAndRenderOrgs();
 }
 
 function switchOrgsTab(tab) {
@@ -821,36 +1031,56 @@ function switchOrgsTab(tab) {
   document.querySelectorAll('.board-tab[data-orgtab]').forEach(b =>
     b.classList.toggle('active', b.dataset.orgtab === tab)
   );
-  renderOrgs();
+  fetchAndRenderOrgs();
 }
 
-function renderOrgs() {
-  const search = (document.getElementById('orgs-search')?.value || '').toLowerCase().trim();
-  const orgs = (orgsTab === 'local' ? localOrgs : globalOrgs)
-    .filter(o => !search ||
-      o.name.toLowerCase().includes(search) ||
-      o.desc.toLowerCase().includes(search)
-    );
+async function fetchAndRenderOrgs() {
+  const search = (document.getElementById('orgs-search')?.value || '').trim();
 
-  if (!orgs.length) {
+  const params = new URLSearchParams();
+  params.append('scope', orgsTab);
+  if (search) params.append('q', search);
+
+  try {
+    const res = await fetch(`${API}/orgs?${params}`, {
+      credentials: 'include'
+    });
+
+    const data = await res.json();
+
+    if (!res.ok) {
+      console.error('Could not load orgs:', data.error);
+      return;
+    }
+
+    renderOrgs(data.orgs);
+
+  } catch (err) {
+    console.error('Fetch orgs error:', err);
+    document.getElementById('orgs-grid').innerHTML =
+      '<div class="no-results" style="grid-column:1/-1">Could not load organizations.</div>';
+  }
+}
+
+function renderOrgs(orgs) {
+  if (!orgs || !orgs.length) {
     document.getElementById('orgs-grid').innerHTML =
       '<div class="no-results" style="grid-column:1/-1">No organizations found.</div>';
     return;
   }
 
   document.getElementById('orgs-grid').innerHTML = orgs.map(o => `
-    <div class="org-card" onclick="openOrgDetail('${o.id}', 'orgs')">
-      <div class="org-emoji">${o.emoji}</div>
+    <div class="org-card" onclick="openOrgDetail('${o.slug}', 'orgs')">
+      <div class="org-emoji">🤝</div>
       <div class="org-name">${o.name}</div>
-      <div class="org-desc">${o.desc}</div>
+      <div class="org-desc">${o.description}</div>
       <div class="org-footer">
-        <div class="org-meta">${o.members} members · ${o.location}</div>
-        <span class="org-tag">${orgsTab === 'local' ? '📍 Local' : '🌐 Global'}</span>
+        <div class="org-meta">${o.member_count} members · ${o.location || 'Remote'}</div>
+        <span class="org-tag">${o.scope === 'local' ? '📍 Local' : '🌐 Global'}</span>
       </div>
     </div>
   `).join('');
 }
-
 
 /* ══════════════════════════════════════
    ORG DETAIL
@@ -862,131 +1092,214 @@ function switchOdTab(name, btn) {
   document.getElementById('od-panel-' + name)?.classList.remove('od-tab-panel-hidden');
 }
 
-function openOrgDetail(id, fromPage) {
-  const org = [...localOrgs, ...globalOrgs].find(o => o.id === id);
-  if (!org) return;
+async function openOrgDetail(slug, fromPage) {
+  try {
+    const res = await fetch(`${API}/orgs/${slug}`, {
+      credentials: 'include'
+    });
 
-  const isLocal = localOrgs.some(o => o.id === id);
-  const evClass = { volunteer:'ev-volunteer', recurring:'ev-recurring', workshop:'ev-workshop', meeting:'ev-meeting' };
-  const evLabel = { volunteer:'Volunteer', recurring:'Recurring', workshop:'Workshop', meeting:'Meeting' };
+    const data = await res.json();
 
-  const annHTML = org.announcements && org.announcements.length
-    ? `<h2 class="od-section-title">Announcements &amp; Updates</h2>
-       <div class="od-announcements">${org.announcements.map(a => `
-         <div class="od-announcement">
-           <div class="od-ann-header">
-             <div class="od-ann-title">${a.title}</div>
-             <div class="od-ann-date">${a.date}</div>
-           </div>
-           <p class="od-ann-body">${a.body}</p>
-         </div>`).join('')}
-       </div>`
-    : '';
+    if (!res.ok) {
+      showToast('Could not load organization.');
+      return;
+    }
 
-  const evHTML = org.events.map(e => {
-    const hasCapacity = e.capacity !== null;
-    const spots = hasCapacity ? e.capacity - e.rsvpCount : null;
-    const isFull = hasCapacity && spots <= 0;
-    const userGoing = rsvpSet.has(e.id);
-    const isMember = joinedOrgs.has(org.id);
-    return `
-    <div class="od-event">
-      <div class="od-event-top">
-        <span class="od-event-badge ${evClass[e.type]}">${evLabel[e.type]}</span>
-        <span class="od-event-time">${e.time}</span>
+    const { org, announcements, events } = data;
+
+    // Check membership status if logged in
+    let memberStatus = 'none';
+    if (loggedIn) {
+      const memRes = await fetch(`${API}/orgs/${org.id}/membership`, {
+        credentials: 'include'
+      });
+      const memData = await memRes.json();
+      memberStatus = memData.status || 'none';
+    }
+
+    const annCount = announcements.length;
+    const evCount = events.length;
+
+    const annHTML = annCount > 0 ? announcements.map(a => `
+      <div class="od-announcement">
+        <div class="od-ann-header">
+          <div class="od-ann-title">${a.title}</div>
+          <div class="od-ann-date">${new Date(a.created_at).toLocaleDateString()}</div>
+        </div>
+        <p class="od-ann-body">${a.body}</p>
       </div>
-      <div class="od-event-title">${e.title}</div>
-      <div class="od-event-date">${e.date}</div>
-      <div class="od-event-desc">${e.desc}</div>
-      <div class="od-event-footer">
-        ${hasCapacity ? `<span class="ev-spots${isFull ? ' ev-spots-full' : ''}">${isFull ? 'Full' : spots + ' spot' + (spots === 1 ? '' : 's') + ' left'}</span>` : '<span class="ev-spots-open">Open</span>'}
-        <button class="rsvp-btn${userGoing ? ' rsvp-btn-going' : ''}${isFull && !userGoing ? ' rsvp-btn-full' : ''}"
-          onclick="toggleRsvp('${e.id}', '${org.id}', this)">
-          ${userGoing ? '✓ Going' : isFull ? 'Full' : 'RSVP'}
-        </button>
-      </div>
-    </div>
-  `}).join('');
+    `).join('') : '<p class="od-empty">No announcements yet.</p>';
 
-  const annCount = org.announcements ? org.announcements.length : 0;
-  const evCount  = org.events ? org.events.length : 0;
-
-  document.getElementById('page-org-detail').innerHTML = `
-    <div class="page-hero-sm">
-      <div class="page-hero-inner">
-        <button class="org-detail-back" onclick="showPage('${fromPage}')">← Back</button>
-        <h1 class="page-hero-title" style="margin-top:0.7rem">${org.emoji} <em>${org.name}</em></h1>
-        <p class="page-hero-sub">${org.members} members · ${org.location}</p>
+    const evHTML = evCount > 0 ? events.map(e => `
+      <div class="od-event">
+        <div class="od-event-top">
+          <span class="od-event-badge">${e.type || 'Event'}</span>
+        </div>
+        <div class="od-event-title">${e.title}</div>
+        <div class="od-event-date">${e.event_date ? new Date(e.event_date).toLocaleDateString() : 'Date TBD'}</div>
+        <div class="od-event-desc">${e.description || ''}</div>
+        <div class="od-event-footer">
+          <span class="ev-spots-open">${e.rsvp_count} going</span>
+          <button class="rsvp-btn" onclick="rsvpEvent(${org.id}, ${e.id}, this)">RSVP</button>
+        </div>
       </div>
-    </div>
-    <div class="org-detail-body">
-      <div>
-        <div class="od-tabs">
-          <button class="od-tab active" onclick="switchOdTab('about', this)">About</button>
-          <button class="od-tab" onclick="switchOdTab('announcements', this)">
-            Announcements${annCount > 0 ? ` <span class="od-tab-badge">${annCount}</span>` : ''}
-          </button>
-          <button class="od-tab" onclick="switchOdTab('events', this)">
-            Events &amp; Opportunities${evCount > 0 ? ` <span class="od-tab-badge">${evCount}</span>` : ''}
-          </button>
+    `).join('') : '<p class="od-empty">No events yet.</p>';
+
+    const joinLabel = memberStatus === 'active' ? '✓ Member' 
+      : memberStatus === 'pending' ? '⧖ Request Pending' 
+      : 'Request to Join';
+    const joinClass = memberStatus === 'active' ? ' od-aside-join-joined' 
+      : memberStatus === 'pending' ? ' od-aside-join-pending' 
+      : '';
+
+    document.getElementById('page-org-detail').innerHTML = `
+      <div class="page-hero-sm">
+        <div class="page-hero-inner">
+          <button class="org-detail-back" onclick="showPage('${fromPage}')">← Back</button>
+          <h1 class="page-hero-title" style="margin-top:0.7rem">🤝 <em>${org.name}</em></h1>
+          <p class="page-hero-sub">${org.member_count} members · ${org.location || 'Remote'}</p>
+        </div>
+      </div>
+      <div class="org-detail-body">
+        <div>
+          <div class="od-tabs">
+            <button class="od-tab active" onclick="switchOdTab('about', this)">About</button>
+            <button class="od-tab" onclick="switchOdTab('announcements', this)">
+              Announcements${annCount > 0 ? ` <span class="od-tab-badge">${annCount}</span>` : ''}
+            </button>
+            <button class="od-tab" onclick="switchOdTab('events', this)">
+              Events${evCount > 0 ? ` <span class="od-tab-badge">${evCount}</span>` : ''}
+            </button>
+          </div>
+
+          <div class="od-tab-panel" id="od-panel-about">
+            <p class="od-about">${org.description || ''}</p>
+            ${org.values_statement ? `<p class="od-about" style="margin-top:1rem;opacity:0.7">${org.values_statement}</p>` : ''}
+          </div>
+
+          <div class="od-tab-panel od-tab-panel-hidden" id="od-panel-announcements">
+            <div class="od-announcements">${annHTML}</div>
+          </div>
+
+          <div class="od-tab-panel od-tab-panel-hidden" id="od-panel-events">
+            <div class="od-events">${evHTML}</div>
+          </div>
         </div>
 
-        <div class="od-tab-panel" id="od-panel-about">
-          <p class="od-about">${org.about}</p>
-        </div>
-
-        <div class="od-tab-panel od-tab-panel-hidden" id="od-panel-announcements">
-          ${annCount > 0 ? `<div class="od-announcements">${org.announcements.map(a => `
-            <div class="od-announcement">
-              <div class="od-ann-header">
-                <div class="od-ann-title">${a.title}</div>
-                <div class="od-ann-date">${a.date}</div>
-              </div>
-              <p class="od-ann-body">${a.body}</p>
-            </div>`).join('')}</div>`
-          : '<p class="od-empty">No announcements yet.</p>'}
-        </div>
-
-        <div class="od-tab-panel od-tab-panel-hidden" id="od-panel-events">
-          <div class="od-events">${evHTML}</div>
-        </div>
-
+        <aside class="org-detail-aside">
+          <div class="od-aside-box">
+            <div class="od-aside-emoji">🤝</div>
+            <div class="od-aside-name">${org.name}</div>
+            <div class="od-aside-count">${org.member_count} members</div>
+            <button class="od-aside-join${joinClass}" id="od-join-btn" 
+              onclick="joinOrg(${org.id}, this)">${joinLabel}</button>
+            <button class="od-aside-report" onclick="openReport('org','${org.name}')">⚑ Report this Organization</button>
+            ${org.location ? `<div class="od-aside-lbl">Location</div><div class="od-aside-val">${org.location}</div>` : ''}
+            ${org.contact_email ? `<div class="od-aside-lbl">Contact</div><div class="od-aside-val">${org.contact_email}</div>` : ''}
+            ${org.website ? `<div class="od-aside-lbl">Website</div><div class="od-aside-val"><a href="${org.website}" target="_blank">${org.website}</a></div>` : ''}
+            <div class="od-aside-lbl">Type</div>
+            <div class="od-aside-val">${org.scope === 'local' ? '📍 Local' : '🌐 Global'}</div>
+          </div>
+        </aside>
       </div>
-      <aside class="org-detail-aside">
-        <div class="od-aside-box">
-          <div class="od-aside-emoji">${org.emoji}</div>
-          <div class="od-aside-name">${org.name}</div>
-          <div class="od-aside-count">${org.members} members</div>
-          <button class="od-aside-join${joinedOrgs.has(org.id) ? ' od-aside-join-joined' : ''}" id="od-join-btn" onclick="toggleJoinOrg('${org.name}', this)">${joinedOrgs.has(org.id) ? '✓ Member' : 'Request to Join'}</button>
-          <button class="od-aside-msg"  onclick="respondToPost('${org.name}', 'Message from ${org.name} page')">Send a Message</button>
-          <button class="od-aside-report" onclick="openReport('org','${org.name}')">⚑ Report this Organization</button>
-          <div class="od-aside-lbl">Location</div>
-          <div class="od-aside-val">${org.location}</div>
-          <div class="od-aside-lbl">Contact</div>
-          <div class="od-aside-val">${org.contact}</div>
-          <div class="od-aside-lbl">Type</div>
-          <div class="od-aside-val">${isLocal ? '📍 Local' : '🌐 Global'}</div>
+      <footer class="site-footer">
+        <div class="footer-inner">
+          <div class="footer-logo">Cariño</div>
+          <div class="footer-mid"><span>Tenderness in action.</span></div>
+          <div class="footer-party">Brought to you by <a href="https://theparty.red" target="_blank">The Red Party</a></div>
         </div>
-      </aside>
-    </div>
-    <footer class="site-footer">
-      <div class="footer-inner">
-        <div class="footer-logo">Cariño</div>
-        <div class="footer-mid"><span>Tenderness in action.</span></div>
-        <div class="footer-party">Brought to you by <a href="https://theparty.red" target="_blank">The Red Party</a></div>
-      </div>
-    </footer>
-  `;
+      </footer>
+    `;
 
-  showPage('org-detail');
+    showPage('org-detail');
+
+  } catch (err) {
+    console.error('Org detail error:', err);
+    showToast('Could not load organization.');
+  }
+}
+
+async function joinOrg(orgId, btn) {
+  if (!loggedIn) { requireAuth(() => joinOrg(orgId, btn)); return; }
+
+  try {
+    const res = await fetch(`${API}/orgs/${orgId}/join`, {
+      method: 'POST',
+      credentials: 'include'
+    });
+
+    const data = await res.json();
+
+    if (!res.ok) {
+      showToast(data.error || 'Could not send join request.');
+      return;
+    }
+
+    btn.textContent = '⧖ Request Pending';
+    btn.classList.add('od-aside-join-pending');
+    showToast('Join request sent.');
+
+  } catch (err) {
+    console.error('Join org error:', err);
+    showToast('Could not connect to server.');
+  }
+}
+
+async function rsvpEvent(orgId, eventId, btn) {
+  if (!loggedIn) { requireAuth(() => rsvpEvent(orgId, eventId, btn)); return; }
+
+  try {
+    const res = await fetch(`${API}/orgs/${orgId}/events/${eventId}/rsvp`, {
+      method: 'POST',
+      credentials: 'include'
+    });
+
+    const data = await res.json();
+
+    if (!res.ok) {
+      showToast(data.error || 'Could not RSVP.');
+      return;
+    }
+
+    btn.textContent = '✓ Going';
+    btn.classList.add('rsvp-btn-going');
+    showToast('RSVP confirmed.');
+
+  } catch (err) {
+    console.error('RSVP error:', err);
+    showToast('Could not connect to server.');
+  }
 }
 
 
 /* ── INIT ── */
-document.addEventListener('DOMContentLoaded', () => {
+document.addEventListener('DOMContentLoaded', async () => {
   buildChains();
+
+  // Check if user is already logged in
+  try {
+    const res = await fetch(`${API}/auth/me`, {
+      credentials: 'include'
+    });
+
+    if (res.ok) {
+      const data = await res.json();
+      loggedIn = true;
+      currentUser = {
+        id:       data.user.id,
+        name:     data.user.display_name || data.user.username,
+        username: data.user.username,
+        location: data.user.location,
+        bio:      data.user.bio,
+        is_admin: data.user.is_admin
+      };
+      updateNavAuth();
+    }
+  } catch (err) {
+    console.error('Session check failed:', err);
+  }
+
   showPage('board');
-  setTimeout(() => openThread(0), 100);
 });
 
 
@@ -998,7 +1311,8 @@ function toggleProfileMenu(e) {
   document.getElementById('profile-dropdown').classList.toggle('open');
 }
 function closeProfileMenu() {
-  document.getElementById('profile-dropdown').classList.remove('open');
+  const dropdown = document.getElementById('profile-dropdown');
+  if (dropdown) dropdown.classList.remove('open');
 }
 document.addEventListener('click', () => closeProfileMenu());
 
@@ -1006,80 +1320,245 @@ document.addEventListener('click', () => closeProfileMenu());
 /* ══════════════════════════════════════
    PROFILE MODAL (quick card)
 ══════════════════════════════════════ */
-function openProfileModal(name, loc, bio, helps, vouches) {
-  const initial = name.charAt(0).toUpperCase();
-  const body = `
-    <div class="profile-modal-wrap">
-      <div class="profile-modal-avatar">${initial}</div>
-      <div>
-        <div class="profile-modal-name">${name}</div>
-        <div class="profile-modal-loc">📍 ${loc}</div>
-        <div class="profile-modal-bio">${bio}</div>
+async function openProfileModal(username) {
+  try {
+    const res = await fetch(`${API}/users/${username}`, {
+      credentials: 'include'
+    });
+
+    const data = await res.json();
+
+    if (!res.ok) {
+      showToast('Could not load profile.');
+      return;
+    }
+
+    const { user, vouches, completedHelps } = data;
+    const initial = (user.display_name || user.username).charAt(0).toUpperCase();
+
+    const body = `
+      <div class="profile-modal-wrap">
+        <div class="profile-modal-avatar">${initial}</div>
+        <div>
+          <div class="profile-modal-name">${user.display_name || user.username}</div>
+          <div class="profile-modal-loc">📍 ${user.location || 'Location not set'}</div>
+          <div class="profile-modal-bio">${user.bio || ''}</div>
+        </div>
       </div>
-    </div>
-    <div class="profile-modal-stats">
-      <div class="profile-modal-stat">
-        <span class="profile-modal-stat-num">${helps}</span>
-        <span class="profile-modal-stat-label">Helps given</span>
+      <div class="profile-modal-stats">
+        <div class="profile-modal-stat">
+          <span class="profile-modal-stat-num">${completedHelps}</span>
+          <span class="profile-modal-stat-label">Helps given</span>
+        </div>
+        <div class="profile-modal-stat">
+          <span class="profile-modal-stat-num">${vouches.length}</span>
+          <span class="profile-modal-stat-label">Vouches</span>
+        </div>
       </div>
-      <div class="profile-modal-stat">
-        <span class="profile-modal-stat-num">${vouches}</span>
-        <span class="profile-modal-stat-label">Vouches</span>
+      <div class="profile-modal-actions">
+        <button class="profile-modal-btn-primary" onclick="closeModal(); showPage('inbox')">Send Message</button>
+        <button class="profile-modal-btn-secondary" onclick="closeModal(); viewProfile('${user.username}')">View Full Profile →</button>
       </div>
-    </div>
-    <div class="profile-modal-actions">
-      <button class="profile-modal-btn-primary" onclick="closeModal(); showPage('inbox')">Send Message</button>
-      <button class="profile-modal-btn-secondary" onclick="closeModal(); showPage('profile')">View Full Profile →</button>
-    </div>
-  `;
-  document.getElementById('modal-body').innerHTML = body;
-  document.getElementById('overlay').classList.add('open');
+    `;
+
+    document.getElementById('modal-body').innerHTML = body;
+    document.getElementById('overlay').classList.add('open');
+
+  } catch (err) {
+    console.error('Profile modal error:', err);
+    showToast('Could not load profile.');
+  }
 }
 
+/* ══════════════════════════════════════
+   PROFILE PAGE
+══════════════════════════════════════ */
+
+async function viewProfile(username) {
+  try {
+    const res = await fetch(`${API}/users/${username}`, {
+      credentials: 'include'
+    });
+
+    const data = await res.json();
+
+    if (!res.ok) {
+      showToast('Could not load profile.');
+      return;
+    }
+
+    const { user, posts, vouches, thankYouNotes, completedHelps } = data;
+    const initial = (user.display_name || user.username).charAt(0).toUpperCase();
+    const memberSince = new Date(user.created_at).toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
+
+    document.getElementById('profile-avatar').textContent = initial;
+    document.getElementById('profile-display-name').textContent = user.display_name || user.username;
+    document.getElementById('profile-location').textContent = '📍 ' + (user.location || 'Location not set');
+    document.getElementById('profile-member-since').textContent = 'Member since ' + memberSince;
+    document.getElementById('profile-bio').textContent = user.bio || '';
+    document.getElementById('profile-helps').textContent = completedHelps;
+    document.getElementById('profile-vouches-count').textContent = vouches.length;
+    document.getElementById('profile-vouches-label').textContent = vouches.length;
+    document.getElementById('profile-report-btn').onclick = () => openReport('profile', username);
+
+    // Posts
+    const postsList = document.getElementById('profile-posts-list');
+    postsList.innerHTML = posts.length ? posts.map(p => `
+      <div class="profile-post-card ${p.type === 'ability' ? 'offer' : 'need'}">
+        <span class="profile-post-type">${p.type === 'ability' ? 'Ability' : 'Need'}</span>
+        <div class="profile-post-title">${p.title}</div>
+        <div class="profile-post-body">${p.body}</div>
+        <div class="profile-post-meta">${p.category} · ${p.location || ''} · ${new Date(p.created_at).toLocaleDateString()}</div>
+      </div>
+    `).join('') : '<p style="opacity:0.4">No active posts.</p>';
+
+    // Vouches
+    const vouchesList = document.getElementById('profile-vouches-list');
+    vouchesList.innerHTML = vouches.length ? vouches.map(v => `
+      <div class="profile-vouch">
+        <div class="profile-vouch-header">
+          <span class="profile-vouch-from">${v.voucher_name || v.voucher_username}</span>
+          <span class="profile-vouch-date">${new Date(v.created_at).toLocaleDateString()}</span>
+        </div>
+        ${v.note ? `<p class="profile-vouch-note">${v.note}</p>` : ''}
+      </div>
+    `).join('') : '<p style="opacity:0.4">No vouches yet.</p>';
+
+    // Thank you notes
+    const thanksList = document.getElementById('profile-thanks-list');
+    thanksList.innerHTML = thankYouNotes.length ? thankYouNotes.map(n => `
+      <div class="profile-thank">
+        <p class="profile-thank-note">"${n.body}"</p>
+        <div class="profile-thank-from">— ${n.author_name}, ${new Date(n.created_at).toLocaleDateString()}</div>
+      </div>
+    `).join('') : '<p style="opacity:0.4">No thank you notes yet.</p>';
+
+    showPage('profile');
+
+  } catch (err) {
+    console.error('View profile error:', err);
+    showToast('Could not load profile.');
+  }
+}
 
 /* ══════════════════════════════════════
    INBOX
 ══════════════════════════════════════ */
-const inboxThreads = [
-  {
-    name: 'Marcus T.', initial: 'M', re: 'Re: Grocery runs for seniors', status: 'active',
-    messages: [
-      { mine: false, text: 'Hey, I saw your post about grocery runs. My neighbor is 84 and really struggling to get out. Would you be able to help her?', time: '2 days ago' },
-      { mine: true,  text: 'Of course — that\'s exactly what I\'m here for. What area is she in and what days work best?', time: '2 days ago' },
-      { mine: false, text: 'She\'s in Northside, near the community center. Weekends are best for her.', time: '1 day ago' },
-      { mine: true,  text: 'Perfect, I\'m in Northside too. I\'ll reach out Saturday morning. What\'s the best way to coordinate with her?', time: '1 day ago' },
-      { mine: false, text: 'Thanks for the help today — you really came through. She was so grateful.', time: '2 hours ago' },
-    ]
-  },
-  {
-    name: 'Rosa L.', initial: 'R', re: 'Re: Ride to medical appointment', status: 'active',
-    messages: [
-      { mine: false, text: 'Hi — I need a ride to a specialist downtown next Tuesday morning, around 9am. I saw your post about rides. Are you available?', time: '2 days ago' },
-      { mine: true,  text: 'Yes I can do that. Where are you coming from?', time: '2 days ago' },
-      { mine: false, text: 'Southside, near the park. It shouldn\'t take long, the appointment is about an hour.', time: '2 days ago' },
-      { mine: false, text: 'Are you still available Tuesday morning?', time: '1 day ago' },
-    ]
-  },
-  {
-    name: 'Priya S.', initial: 'P', re: 'Re: Community garden shed', status: 'pending-completion',
-    messages: [
-      { mine: false, text: 'Hello! Our community garden shed roof is leaking badly. I saw your post about home repairs. Would you be able to take a look?', time: '1 week ago' },
-      { mine: true,  text: 'Absolutely. I can come by this weekend. What time works?', time: '1 week ago' },
-      { mine: false, text: 'Saturday afternoon? Around 2pm?', time: '6 days ago' },
-      { mine: true,  text: 'Saturday at 2 works. I\'ll bring what I need.', time: '6 days ago' },
-      { mine: false, text: 'The shed looks amazing, thank you so much', time: '3 days ago' },
-    ]
-  },
-  {
-    name: 'Keisha M.', initial: 'K', re: 'Re: Home repairs', status: 'active',
-    messages: [
-      { mine: false, text: 'Hi, I saw your post about home repairs — I have a leaky faucet that\'s been dripping for months. I can\'t afford a plumber right now. Would you be able to help?', time: '5 days ago' },
-    ]
-  },
-];
+let inboxThreads = [];
 
-let activeThread = 0;
-const joinedOrgs = new Set(['tool-library', 'tech-collective']); // Alex M.'s memberships
+async function loadInbox() {
+  try {
+    const res = await fetch(`${API}/threads`, {
+      credentials: 'include'
+    });
+
+    const data = await res.json();
+
+    if (!res.ok) {
+      console.error('Could not load inbox:', data.error);
+      return;
+    }
+
+    inboxThreads = data.threads;
+    renderInbox();
+
+  } catch (err) {
+    console.error('Load inbox error:', err);
+  }
+}
+
+function renderInbox() {
+  const threadList = document.getElementById('inbox-thread-list');
+  if (!threadList) return;
+
+  if (!inboxThreads.length) {
+    threadList.innerHTML = '<div class="inbox-empty">No messages yet.</div>';
+    return;
+  }
+
+  threadList.innerHTML = inboxThreads.map((t, i) => {
+    const isMe = t.participant_a === currentUser?.id;
+    const otherName = isMe 
+      ? (t.user_b_name || t.user_b_username) 
+      : (t.user_a_name || t.user_a_username);
+    const initial = otherName ? otherName.charAt(0).toUpperCase() : '?';
+    const preview = t.last_message || 'No messages yet';
+    const unread = parseInt(t.unread_count) > 0;
+
+    return `
+      <div class="inbox-thread ${i === 0 ? 'active' : ''}" onclick="openThreadById(${t.id})">
+        <div class="inbox-thread-avatar">${initial}</div>
+        <div class="inbox-thread-info">
+          <div class="inbox-thread-name">${otherName}</div>
+          <div class="inbox-thread-preview">${preview}</div>
+        </div>
+        <div class="inbox-thread-meta">
+          <div class="inbox-thread-time">${t.last_message_at ? new Date(t.last_message_at).toLocaleDateString() : ''}</div>
+          ${unread ? '<div class="inbox-unread-dot"></div>' : ''}
+        </div>
+      </div>
+    `;
+  }).join('');
+
+  // Auto open first thread
+  if (inboxThreads.length > 0) {
+    openThreadById(inboxThreads[0].id);
+  }
+}
+
+async function openThreadById(threadId) {
+  try {
+    const res = await fetch(`${API}/threads/${threadId}`, {
+      credentials: 'include'
+    });
+
+    const data = await res.json();
+
+    if (!res.ok) {
+      console.error('Could not load thread:', data.error);
+      return;
+    }
+
+    const { thread, messages } = data;
+
+    const isMe = thread.participant_a === currentUser?.id;
+    const otherName = isMe
+      ? (thread.user_b_name || thread.user_b_username)
+      : (thread.user_a_name || thread.user_a_username);
+    const initial = otherName ? otherName.charAt(0).toUpperCase() : '?';
+
+    // Update header
+    document.getElementById('inbox-thread-hd').innerHTML = `
+      <div class="inbox-thread-hd-avatar">${initial}</div>
+      <div class="inbox-thread-hd-info">
+        <div class="inbox-thread-hd-name">${otherName}</div>
+        <div class="inbox-thread-hd-re">${thread.post_title ? 'Re: ' + thread.post_title : 'Direct message'}</div>
+      </div>
+    `;
+
+    // Render messages
+    const messagesEl = document.getElementById('inbox-messages');
+    if (!messages.length) {
+      messagesEl.innerHTML = '<div class="inbox-empty-thread">No messages yet. Say hello.</div>';
+    } else {
+      messagesEl.innerHTML = messages.map(m => `
+        <div class="inbox-msg ${m.sender_id === currentUser?.id ? 'mine' : 'theirs'}">
+          <div class="inbox-msg-bubble">${m.body}</div>
+          <div class="inbox-msg-time">${new Date(m.created_at).toLocaleTimeString()}</div>
+        </div>
+      `).join('');
+      messagesEl.scrollTop = messagesEl.scrollHeight;
+    }
+
+    // Show compose box and set current thread
+    document.getElementById('inbox-compose').style.display = 'flex';
+    document.getElementById('inbox-compose-input').placeholder = `Message ${otherName}…`;
+    window.currentThreadId = threadId;
+
+  } catch (err) {
+    console.error('Open thread error:', err);
+  }
+}
 
 function toggleJoinOrg(orgName, btn) {
   if (joinedOrgs.has(orgName)) return; // already a member
@@ -1117,67 +1596,34 @@ function submitJoinRequest(orgName) {
   showToast(`Request sent to ${orgName}`);
 }
 
-function respondToPost(posterName, postTitle) {
-  if (!loggedIn) { requireAuth(() => respondToPost(posterName, postTitle)); return; }
-  const initial = posterName.charAt(0).toUpperCase();
-
-  // Check if a thread with this person already exists
-  const existing = inboxThreads.findIndex(t => t.name === posterName);
-  if (existing !== -1) {
-    showPage('inbox');
-    openThread(existing);
-    const input = document.getElementById('inbox-compose-input');
-    input.focus();
-    input.placeholder = `Re: ${postTitle}`;
-    return;
+async function respondToPost(userId, posterName, postTitle) {
+  if (!loggedIn) { 
+    requireAuth(() => respondToPost(userId, posterName, postTitle)); 
+    return; 
   }
 
-  // Create a new thread at the top
-  const newThread = {
-    name: posterName,
-    initial,
-    re: `Re: ${postTitle}`,
-    messages: []
-  };
-  inboxThreads.unshift(newThread);
+  try {
+    const res = await fetch(`${API}/threads`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      credentials: 'include',
+      body: JSON.stringify({ recipient_id: userId })
+    });
 
-  // Add thread to the sidebar list
-  const threadList = document.getElementById('inbox-thread-list');
-  const el = document.createElement('div');
-  el.className = 'inbox-thread active';
-  el.onclick = () => openThread(0);
-  el.innerHTML = `
-    <div class="inbox-thread-avatar">${initial}</div>
-    <div class="inbox-thread-info">
-      <div class="inbox-thread-name">${posterName}</div>
-      <div class="inbox-thread-preview">Re: ${postTitle}</div>
-    </div>
-    <div class="inbox-thread-meta">
-      <div class="inbox-thread-time">Now</div>
-    </div>
-  `;
-  // Deactivate all others and insert at top
-  threadList.querySelectorAll('.inbox-thread').forEach(t => t.classList.remove('active'));
-  threadList.insertBefore(el, threadList.firstChild);
+    const data = await res.json();
 
-  // Shift existing thread indices
-  threadList.querySelectorAll('.inbox-thread:not(:first-child)').forEach((t, i) => {
-    t.onclick = () => openThread(i + 1);
-  });
+    if (!res.ok) {
+      showToast(data.error || 'Could not start conversation.');
+      return;
+    }
 
-  showPage('inbox');
-  activeThread = 0;
+    showPage('inbox');
+    loadInbox();
 
-  // Update header
-  document.querySelector('.inbox-thread-hd-avatar').textContent = initial;
-  document.querySelector('.inbox-thread-hd-name').textContent = posterName;
-  document.querySelector('.inbox-thread-hd-re').textContent = `Re: ${postTitle}`;
-  document.getElementById('inbox-messages').innerHTML = '';
-
-  // Focus and hint compose box
-  const input = document.getElementById('inbox-compose-input');
-  input.placeholder = `Message ${posterName} about "${postTitle}"…`;
-  setTimeout(() => input.focus(), 100);
+  } catch (err) {
+    console.error('Respond error:', err);
+    showToast('Could not connect to server.');
+  }
 }
 
 
@@ -1329,14 +1775,38 @@ function openThread(idx) {
   }
 }
 
-function sendMessage() {
+async function sendMessage() {
   const input = document.getElementById('inbox-compose-input');
   const text = input.value.trim();
   if (!text) return;
-  const thread = inboxThreads[activeThread];
-  thread.messages.push({ mine: true, text, time: 'Just now' });
-  input.value = '';
-  openThread(activeThread);
+
+  if (!window.currentThreadId) {
+    showToast('No thread selected.');
+    return;
+  }
+
+  try {
+    const res = await fetch(`${API}/threads/${window.currentThreadId}/messages`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      credentials: 'include',
+      body: JSON.stringify({ body: text })
+    });
+
+    const data = await res.json();
+
+    if (!res.ok) {
+      showToast(data.error || 'Could not send message.');
+      return;
+    }
+
+    input.value = '';
+    openThreadById(window.currentThreadId);
+
+  } catch (err) {
+    console.error('Send message error:', err);
+    showToast('Could not connect to server.');
+  }
 }
 
 

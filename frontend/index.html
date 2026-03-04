@@ -85,9 +85,9 @@
       </div>
       <div class="topbar-search-wrap">
         <span class="search-ico">⌕</span>
-        <input type="text" id="board-search" class="topbar-search" placeholder="Search…" oninput="renderCards()">
+        <input type="text" id="board-search" class="topbar-search" placeholder="Search…" oninput="fetchAndRenderCards()">
       </div>
-      <select id="board-sort" class="topbar-sort" onchange="renderCards()">
+      <select id="board-sort" class="topbar-sort" onchange="fetchAndRenderCards()">
         <option value="all">All Posts</option>
         <option value="offers">Abilities Only</option>
         <option value="needs">Needs Only</option>
@@ -161,7 +161,7 @@
       </div>
       <div class="topbar-search-wrap">
         <span class="search-ico">⌕</span>
-        <input type="text" id="orgs-search" class="topbar-search" placeholder="Search organizations…" oninput="renderOrgs()">
+        <input type="text" id="orgs-search" class="topbar-search" placeholder="Search organizations…" oninput="fetchAndRenderOrgs()">
       </div>
       <button class="topbar-btn-offer" onclick="openModal('add-org')">+ Add Organization</button>
     </div>
@@ -280,127 +280,48 @@
 
   <div class="profile-hero">
     <div class="profile-hero-inner">
-      <div class="profile-avatar-lg">A</div>
+      <div class="profile-avatar-lg" id="profile-avatar">?</div>
       <div class="profile-hero-info">
-        <h1 class="profile-display-name">Alex M.</h1>
+        <h1 class="profile-display-name" id="profile-display-name"></h1>
         <div class="profile-meta-row">
-          <span class="profile-meta-item">📍 Northside, DC</span>
+          <span class="profile-meta-item" id="profile-location"></span>
           <span class="profile-meta-dot">·</span>
-          <span class="profile-meta-item">Member since March 2026</span>
+          <span class="profile-meta-item" id="profile-member-since"></span>
         </div>
-        <p class="profile-bio">Retired electrician. I have tools, time, and a truck. Happy to help with home repairs, moving, or whatever the neighborhood needs.</p>
+        <p class="profile-bio" id="profile-bio"></p>
         <div class="profile-stats">
           <div class="profile-stat">
-            <span class="profile-stat-num">12</span>
+            <span class="profile-stat-num" id="profile-helps">0</span>
             <span class="profile-stat-label">Helps given</span>
           </div>
           <div class="profile-stat">
-            <span class="profile-stat-num">3</span>
-            <span class="profile-stat-label">Helps received</span>
-          </div>
-          <div class="profile-stat">
-            <span class="profile-stat-num">9</span>
+            <span class="profile-stat-num" id="profile-vouches-count">0</span>
             <span class="profile-stat-label">Vouches</span>
           </div>
         </div>
-        <button class="profile-report-btn" onclick="openReport('profile','Alex M.')">⚑ Report this profile</button>
+        <button class="profile-report-btn" id="profile-report-btn">⚑ Report this profile</button>
       </div>
     </div>
   </div>
 
   <div class="profile-body">
-
     <div class="profile-col-main">
-
       <div class="profile-section">
         <h2 class="profile-section-title">Active Posts</h2>
-        <div class="profile-posts-list" id="profile-posts-list">
-          <div class="profile-post-card offer">
-            <span class="profile-post-type">Ability</span>
-            <div class="profile-post-title">Home repairs — free for people who need it</div>
-            <div class="profile-post-body">Can help with leaky faucets, drywall, painting, basic electrical. Retired contractor with time. Free for people who can't afford one.</div>
-            <div class="profile-post-meta">Infrastructure · Westside · 5h ago</div>
-          </div>
-          <div class="profile-post-card offer">
-            <span class="profile-post-type">Ability</span>
-            <div class="profile-post-title">Truck available for moves and hauls</div>
-            <div class="profile-post-body">Have a pickup truck and free weekends. Happy to help people move, haul furniture, or make a dump run.</div>
-            <div class="profile-post-meta">Transport · Northside · 2d ago</div>
-          </div>
-        </div>
+        <div class="profile-posts-list" id="profile-posts-list"></div>
       </div>
-
       <div class="profile-section">
-        <h2 class="profile-section-title">Vouches <span class="profile-section-count">9</span></h2>
-        <div class="profile-vouches-list">
-          <div class="profile-vouch">
-            <div class="profile-vouch-header">
-              <span class="profile-vouch-from" onclick="openProfileModal('Marcus T.', 'Northside', 'I have a car and free time on weekends.', 8, 5)">Marcus T.</span>
-              <span class="profile-vouch-date">2 weeks ago</span>
-            </div>
-            <p class="profile-vouch-note">Alex fixed my kitchen sink in under an hour and refused payment. This is what community looks like.</p>
-          </div>
-          <div class="profile-vouch">
-            <div class="profile-vouch-header">
-              <span class="profile-vouch-from" onclick="openProfileModal('Rosa L.', 'Southside', 'Looking for help getting to medical appointments.', 2, 1)">Rosa L.</span>
-              <span class="profile-vouch-date">1 month ago</span>
-            </div>
-            <p class="profile-vouch-note">Helped me move when I had nothing and no one. Showed up with a truck and three hours of his time. I won't forget it.</p>
-          </div>
-          <div class="profile-vouch">
-            <div class="profile-vouch-header">
-              <span class="profile-vouch-from" onclick="openProfileModal('Priya S.', 'Oak Park', 'My garden grows more than I can eat.', 4, 0)">Priya S.</span>
-              <span class="profile-vouch-date">1 month ago</span>
-            </div>
-            <p class="profile-vouch-note">Came and helped fix our community garden shed. Wouldn't take anything in return. A real neighbor.</p>
-          </div>
-        </div>
+        <h2 class="profile-section-title">Vouches <span class="profile-section-count" id="profile-vouches-label">0</span></h2>
+        <div class="profile-vouches-list" id="profile-vouches-list"></div>
       </div>
-
     </div>
 
     <div class="profile-col-side">
-
       <div class="profile-section">
-        <h2 class="profile-section-title">Organizations <span class="profile-section-count">2</span></h2>
-        <div class="profile-orgs-list">
-          <div class="profile-org-item" onclick="openOrgDetail('tool-library', 'profile')">
-            <div class="profile-org-emoji">🔧</div>
-            <div class="profile-org-info">
-              <div class="profile-org-name">Tool Lending Library</div>
-              <div class="profile-org-meta">📍 Local · Member since March 2026</div>
-            </div>
-          </div>
-          <div class="profile-org-item" onclick="openOrgDetail('tech-collective', 'profile')">
-            <div class="profile-org-emoji">💻</div>
-            <div class="profile-org-info">
-              <div class="profile-org-name">Mutual Aid Tech Collective</div>
-              <div class="profile-org-meta">🌐 Global · Member since March 2026</div>
-            </div>
-          </div>
-        </div>
+        <h2 class="profile-section-title">Thank You Notes</h2>
+        <div class="profile-thanks-list" id="profile-thanks-list"></div>
       </div>
-
-      <div class="profile-section">
-        <h2 class="profile-section-title">Thank You Notes <span class="profile-section-count">5</span></h2>
-        <div class="profile-thanks-list">
-          <div class="profile-thank">
-            <p class="profile-thank-note">"You didn't have to help and you did anyway. Thank you more than I can say."</p>
-            <div class="profile-thank-from">— Keisha M., 3 weeks ago</div>
-          </div>
-          <div class="profile-thank">
-            <p class="profile-thank-note">"Fixed what three other people told me couldn't be fixed. Incredible."</p>
-            <div class="profile-thank-from">— James R., 1 month ago</div>
-          </div>
-          <div class="profile-thank">
-            <p class="profile-thank-note">"Showed up on time, did more than I asked, and left my place cleaner than he found it."</p>
-            <div class="profile-thank-from">— Community member, 2 months ago</div>
-          </div>
-        </div>
-      </div>
-
     </div>
-
   </div>
 
   <footer class="site-footer">
@@ -413,7 +334,6 @@
 
 </div><!-- /page-profile -->
 
-
 <!-- ══════════════════════════════════════
      INBOX PAGE
 ══════════════════════════════════════ -->
@@ -422,67 +342,13 @@
   <div class="inbox-shell">
     <div class="inbox-sidebar">
       <div class="inbox-sidebar-hd">Messages</div>
-      <div class="inbox-thread-list" id="inbox-thread-list">
-
-        <div class="inbox-thread active" onclick="openThread(0)">
-          <div class="inbox-thread-avatar">M</div>
-          <div class="inbox-thread-info">
-            <div class="inbox-thread-name">Marcus T.</div>
-            <div class="inbox-thread-preview">Thanks for the help today — you really came through</div>
-          </div>
-          <div class="inbox-thread-meta">
-            <div class="inbox-thread-time">2h ago</div>
-            <div class="inbox-unread-dot"></div>
-          </div>
-        </div>
-
-        <div class="inbox-thread" onclick="openThread(1)">
-          <div class="inbox-thread-avatar">R</div>
-          <div class="inbox-thread-info">
-            <div class="inbox-thread-name">Rosa L.</div>
-            <div class="inbox-thread-preview">Are you still available Tuesday morning?</div>
-          </div>
-          <div class="inbox-thread-meta">
-            <div class="inbox-thread-time">1d ago</div>
-            <div class="inbox-unread-dot"></div>
-          </div>
-        </div>
-
-        <div class="inbox-thread" onclick="openThread(2)">
-          <div class="inbox-thread-avatar">P</div>
-          <div class="inbox-thread-info">
-            <div class="inbox-thread-name">Priya S.</div>
-            <div class="inbox-thread-preview">The shed looks amazing, thank you so much</div>
-          </div>
-          <div class="inbox-thread-meta">
-            <div class="inbox-thread-time">3d ago</div>
-          </div>
-        </div>
-
-        <div class="inbox-thread" onclick="openThread(3)">
-          <div class="inbox-thread-avatar">K</div>
-          <div class="inbox-thread-info">
-            <div class="inbox-thread-name">Keisha M.</div>
-            <div class="inbox-thread-preview">Hi, I saw your post about home repairs — I have a leaky faucet</div>
-          </div>
-          <div class="inbox-thread-meta">
-            <div class="inbox-thread-time">5d ago</div>
-          </div>
-        </div>
-
-      </div>
+      <div class="inbox-thread-list" id="inbox-thread-list"></div>
     </div>
 
     <div class="inbox-main" id="inbox-main">
-      <div class="inbox-thread-hd" id="inbox-thread-hd">
-        <div class="inbox-thread-hd-avatar">M</div>
-        <div class="inbox-thread-hd-info">
-          <div class="inbox-thread-hd-name">Marcus T.</div>
-          <div class="inbox-thread-hd-re">Re: Grocery runs for seniors</div>
-        </div>
-      </div>
+      <div class="inbox-thread-hd" id="inbox-thread-hd"></div>
       <div class="inbox-messages" id="inbox-messages"></div>
-      <div class="inbox-compose" id="inbox-compose">
+      <div class="inbox-compose" id="inbox-compose" style="display:none">
         <textarea class="inbox-compose-input" id="inbox-compose-input" placeholder="Write a message…" rows="2"></textarea>
         <button class="inbox-compose-send" onclick="sendMessage()">Send →</button>
       </div>
