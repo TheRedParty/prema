@@ -96,6 +96,7 @@ function showPage(id) {
   if (id === 'board') initBoard();
   if (id === 'orgs')  initOrgs();
   if (id === 'admin') initAdmin();
+  if (id === 'inbox') loadInbox();
 }
 
 function toggleMenu() {
@@ -144,7 +145,7 @@ function updateNavAuth() {
         <div class="profile-dropdown-divider"></div>
         <button class="profile-dropdown-item" onclick="viewProfile('${currentUser.username}'); closeProfileMenu()">My Profile</button>
         <button class="profile-dropdown-item" onclick="showPage('inbox'); closeProfileMenu()">
-          Inbox <span class="inbox-badge" id="inbox-badge">2</span>
+          Inbox <span class="inbox-badge" id="inbox-badge" style="display:none"></span>
         </button>
         ${currentUser.is_admin ? `
   <div class="profile-dropdown-divider"></div>
@@ -229,6 +230,7 @@ async function submitSignIn() {
 
     closeModal();
     updateNavAuth();
+    loadInbox();
     showToast('Welcome back, ' + currentUser.name.split(' ')[0] + '.');
     if (pendingAction) { const fn = pendingAction; pendingAction = null; setTimeout(fn, 250); }
 
@@ -621,174 +623,9 @@ async function submitOrg() {
   }
 }
 
-
 /* ══════════════════════════════════════
-   DATA
+   FILTERS
 ══════════════════════════════════════ */
-const localOrgs = [
-  {
-    id: 'community-garden', emoji: '🌱',
-    name: 'Community Garden Collective',
-    desc: 'Growing food and sharing the harvest freely',
-    members: 34, location: 'Northside Community Center',
-    contact: 'garden@carino.red',
-    about: 'We maintain three shared garden plots across the neighborhood. All produce is distributed freely to members and neighbors in need. No experience required — just show up and we\'ll teach you everything.',
-    announcements: [],
-    events: [
-      { id:'ev-1', title: 'Spring Planting Day', date: 'Saturday, March 8', time: '9 AM – 1 PM', type: 'volunteer', capacity: 20, rsvpCount: 14, desc: 'Help us get the spring beds ready. Seeds, tools, and food provided. All welcome.' },
-      { id:'ev-2', title: 'Weekly Harvest Share', date: 'Every Sunday', time: '11 AM – 1 PM', type: 'recurring', capacity: null, rsvpCount: 0, desc: 'Come pick up fresh produce or help sort and distribute. Free for everyone.' },
-      { id:'ev-3', title: 'Composting Workshop', date: 'Saturday, March 22', time: '2 PM – 4 PM', type: 'workshop', capacity: 12, rsvpCount: 11, desc: 'Learn to compost at home. You\'ll leave with a starter kit.' }
-    ]
-  },
-  {
-    id: 'tool-library', emoji: '🔧',
-    name: 'Tool Lending Library',
-    desc: 'Borrow tools instead of buying them',
-    members: 67, location: 'East End Workshop, 114 Meridian St',
-    contact: 'tools@carino.red',
-    about: 'Why should every household own a drill they use twice a year? Our library has over 200 items — power tools, hand tools, garden equipment. Borrow for free, return when done.',
-    announcements: [
-      { title: 'New power tools added', body: 'We just added a Milwaukee cordless drill set, an oscillating multi-tool, and a random orbital sander. All available to borrow starting this Tuesday.', date: '2 days ago' },
-      { title: 'Spring cleaning of the workshop', body: 'We\'re doing a full inventory and deep clean on Saturday March 15 starting at 10am. Members who help out get priority borrowing for the following month.', date: '1 week ago' }
-    ],
-    events: [
-      { id:'ev-4', title: 'Open Hours', date: 'Every Tuesday & Thursday', time: '5 PM – 8 PM', type: 'recurring', capacity: null, rsvpCount: 0, desc: 'Drop in to borrow or return tools. No appointment needed.' },
-      { id:'ev-5', title: 'Basic Home Repair Workshop', date: 'Sunday, March 16', time: '1 PM – 4 PM', type: 'workshop', capacity: 15, rsvpCount: 8, desc: 'Patching drywall, fixing leaky faucets, replacing outlets. Free, hands-on.' },
-      { id:'ev-6', title: 'Bike Repair Clinic', date: 'Saturday, March 29', time: '10 AM – 2 PM', type: 'workshop', capacity: 18, rsvpCount: 6, desc: 'Bring your bike. Tubes, brakes, chains — all covered.' }
-    ]
-  },
-  {
-    id: 'mutual-aid-network', emoji: '🤝',
-    name: 'Mutual Aid Network',
-    desc: 'Coordinating local needs and getting them met',
-    members: 118, location: 'Multiple locations',
-    contact: 'network@carino.red',
-    about: 'We are the coordination hub for local mutual aid — connecting people who need help with people who can provide it, organizing emergency response, making sure nothing falls through the cracks.',
-    announcements: [],
-    events: [
-      { title: 'Monthly Coordination Meeting', date: 'First Monday of each month', time: '7 PM – 9 PM', type: 'meeting', desc: 'Open to all. We review needs, assign volunteers, plan for the month ahead.' },
-      { title: 'Emergency Grocery Run', date: 'Every Saturday', time: '10 AM', type: 'recurring', desc: 'Drivers needed to deliver groceries to people who can\'t get out.' },
-      { title: 'New Volunteer Orientation', date: 'Sunday, March 9', time: '3 PM – 5 PM', type: 'workshop', desc: 'First time volunteering? Come meet the network and find where you fit.' }
-    ]
-  },
-  {
-    id: 'youth-tutoring', emoji: '📚',
-    name: 'Youth Tutoring Circle',
-    desc: 'Free tutoring for K–12 students, no exceptions',
-    members: 29, location: 'Southside Library, Room 4',
-    contact: 'tutoring@carino.red',
-    about: 'Every child deserves support with their education regardless of what their family can afford. We match volunteer tutors with students who need help.',
-    announcements: [],
-    events: [
-      { title: 'Tutoring Sessions', date: 'Tuesdays & Thursdays', time: '4 PM – 7 PM', type: 'recurring', desc: 'Drop-in tutoring for any K–12 subject.' },
-      { title: 'Tutor Volunteer Sign-Up', date: 'Ongoing', time: 'Flexible', type: 'volunteer', desc: 'Can you help a kid with math or reading? We need you.' },
-      { title: 'SAT Prep', date: 'Saturdays in April', time: '10 AM – 12 PM', type: 'workshop', desc: 'Free SAT prep for high school juniors and seniors. Four sessions starting April 5.' }
-    ]
-  },
-  {
-    id: 'disability-access', emoji: '♿',
-    name: 'Disability Access Group',
-    desc: 'Improving access and supporting each other',
-    members: 41, location: 'Online and rotating accessible venues',
-    contact: 'access@carino.red',
-    about: 'We advocate for accessible spaces, support disabled community members with practical needs, and build peer relationships among people navigating disability together.',
-    announcements: [],
-    events: [
-      { title: 'Peer Support Circle', date: 'Every other Wednesday', time: '6 PM – 8 PM', type: 'recurring', desc: 'A space to talk, vent, share resources, and support each other.' },
-      { title: 'Accessibility Audit Walk', date: 'Saturday, March 15', time: '11 AM – 2 PM', type: 'volunteer', desc: 'We walk local spaces and document accessibility barriers.' },
-      { title: 'Benefits Navigation Help', date: 'By appointment', time: 'Flexible', type: 'volunteer', desc: 'Navigating disability benefits is a nightmare. We have people who have been through it.' }
-    ]
-  }
-];
-
-const globalOrgs = [
-  {
-    id: 'open-source-good', emoji: '💻',
-    name: 'Open Source for Good',
-    desc: 'Code for mutual aid orgs and the public good',
-    members: 203, location: 'Remote — Discord and GitHub',
-    contact: 'code@carino.red',
-    about: 'Developers, designers, and technical people who want their skills to serve something real. We build and maintain free software for mutual aid orgs, nonprofits, and community groups.',
-    announcements: [
-      { title: 'Cariño backend development starting', body: 'We\'re beginning work on the backend for Cariño — the mutual aid platform built by The Red Party. Node/Express/PostgreSQL stack. If you want to contribute reach out through the platform.', date: '3 days ago' },
-      { title: 'Looking for a security-focused contributor', body: 'We need someone with cybersecurity experience to review our auth implementation and database security before we go live. If that\'s you, get in touch.', date: '5 days ago' }
-    ],
-    events: [
-      { title: 'Weekly Standup', date: 'Every Monday', time: '7 PM ET', type: 'recurring', desc: 'Quick check-in on active projects. Join Discord to participate.' },
-      { title: 'Project Intake — Spring 2026', date: 'Applications open now', time: 'Ongoing', type: 'volunteer', desc: 'Community orgs can submit projects for our spring cohort.' },
-      { title: 'Intro to Contributing', date: 'Sunday, March 23', time: '2 PM ET', type: 'workshop', desc: 'Never contributed to open source? We\'ll walk you through it.' }
-    ]
-  },
-  {
-    id: 'legal-aid-network', emoji: '⚖️',
-    name: 'Legal Aid Network',
-    desc: 'Connecting people with pro bono lawyers',
-    members: 87, location: 'Remote — video and phone',
-    contact: 'legal@carino.red',
-    about: 'Legal help should not be something only rich people can access. We connect people facing eviction, labor disputes, immigration issues, and debt with attorneys and paralegals who volunteer their time.',
-    announcements: [],
-    events: [
-      { title: 'Tenant Rights Q&A', date: 'Every other Tuesday', time: '6:30 PM ET', type: 'recurring', desc: 'Live Q&A with a tenant rights attorney.' },
-      { title: 'Know Your Labor Rights', date: 'Wednesday, March 12', time: '7 PM ET', type: 'workshop', desc: 'Wage theft, wrongful termination, workplace safety — what you\'re entitled to.' },
-      { title: 'Intake Open Hours', date: 'Fridays', time: '12 PM – 3 PM ET', type: 'recurring', desc: 'Book a free 30-minute consultation with a volunteer attorney.' }
-    ]
-  },
-  {
-    id: 'peer-support', emoji: '💙',
-    name: 'Mental Health Peer Support',
-    desc: 'Lived experience, no judgment, just people',
-    members: 156, location: 'Remote — video and chat',
-    contact: 'support@carino.red',
-    about: 'We are not therapists. We are people who have been through depression, anxiety, crisis, grief, burnout — and we know how to sit with someone who is struggling without trying to fix them.',
-    announcements: [],
-    events: [
-      { title: 'Open Support Circle', date: 'Every Thursday', time: '8 PM ET', type: 'recurring', desc: 'Drop in, say as much or as little as you want. A space to not be alone.' },
-      { title: 'Peer Support Training', date: 'Starts April 1', time: '6 weeks, Tuesdays 7 PM ET', type: 'workshop', desc: 'Free six-week training: active listening, crisis response, self-care.' },
-      { title: '1-on-1 Peer Matching', date: 'Ongoing', time: 'Your schedule', type: 'volunteer', desc: 'Request a peer match — someone who has been through something similar.' }
-    ]
-  },
-  {
-    id: 'worker-coop-network', emoji: '🏭',
-    name: 'Worker Co-op Network',
-    desc: 'Supporting worker-owned businesses and conversions',
-    members: 74, location: 'Remote — monthly calls and events',
-    contact: 'coops@carino.red',
-    about: 'We support workers who want to convert their workplace to a cooperative, start new worker-owned businesses, and connect existing co-ops with the resources and people they need.',
-    announcements: [],
-    events: [
-      { title: 'Co-op Conversion Q&A', date: 'First Thursday of each month', time: '6 PM ET', type: 'recurring', desc: 'Open Q&A for workers exploring conversion to a cooperative.' },
-      { title: 'New Co-op Mentorship', date: 'Ongoing', time: 'Flexible', type: 'volunteer', desc: 'Experienced co-op members available to mentor new worker-owners.' },
-      { title: 'Co-op Finance Workshop', date: 'Saturday, April 5', time: '1 PM ET', type: 'workshop', desc: 'How to fund a worker cooperative without giving up control.' }
-    ]
-  }
-];
-
-const boardData = {
-  local: [
-    { id: 1,  type: 'offer', cat: 'food',           title: 'Grocery runs for seniors',              body: 'I have a car and free time on weekends. Happy to do grocery runs for seniors or anyone with mobility issues in the Northside area. No charge, no catch.',                            name: 'Marcus T.',    loc: 'Northside',      time: '2h ago' },
-    { id: 2,  type: 'need',  cat: 'food',           title: 'Baby formula — urgent',                 body: 'My sister just had her baby and we ran out of formula. Any brand works. Will pick up immediately.',                                                                                 name: 'Keisha M.',    loc: 'East End',       time: '3h ago' },
-    { id: 3,  type: 'offer', cat: 'infrastructure', title: 'Home repairs — free for people who need it', body: 'Can help with leaky faucets, drywall, painting, basic electrical. I\'m a retired contractor and I have the time. Free for people who can\'t afford a contractor.',           name: 'James R.',     loc: 'Westside',       time: '5h ago' },
-    { id: 4,  type: 'need',  cat: 'transport',      title: 'Ride to medical appointment',           body: 'Need a ride to a specialist downtown next Tuesday morning around 9am. Can offer gas money. Won\'t take long.',                                                                      name: 'Rosa L.',      loc: 'Southside',      time: '6h ago' },
-    { id: 5,  type: 'offer', cat: 'food',           title: 'Free after-school snacks',              body: 'I bake extra every week and drop off snacks at the community center on Tuesdays. Grab what you need — no questions asked.',                                                        name: 'Margaret O.',  loc: 'Central',        time: '1d ago' },
-    { id: 6,  type: 'need',  cat: 'healthcare',     title: 'Just need someone to talk to',          body: 'Going through a really hard time and feeling isolated. Not looking for professional advice, just a human conversation.',                                                            name: 'Jordan T.',    loc: 'Any',            time: '1d ago' },
-    { id: 7,  type: 'offer', cat: 'food',           title: 'Extra produce every week',              body: 'My garden grows more than I can eat. I leave bags on my porch every Sunday morning — take what you need. Tomatoes, greens, herbs, squash depending on the season.',               name: 'Priya S.',     loc: 'Oak Park',       time: '2d ago' },
-    { id: 8,  type: 'need',  cat: 'food',           title: 'Help with meal prep while I recover',   body: 'Recovering from surgery and can\'t stand long enough to cook. Have groceries, just need help preparing food for the week. Even a few hours would mean everything.',               name: 'Tanya B.',     loc: 'East End',       time: '2d ago' },
-    { id: 9,  type: 'offer', cat: 'infrastructure', title: 'Community WiFi help',                   body: 'Can help households get connected to low-income internet programs — Comcast Essentials, ACP, whatever is available in your area. Free, no catch.',                                  name: 'Deb L.',       loc: 'Northside',      time: '3d ago' },
-    { id: 10, type: 'need',  cat: 'housing',        title: 'Temporary housing needed urgently',     body: 'Leaving a bad situation with my daughter. We need somewhere safe to stay for a week or two while I sort things out. I\'m working, I can contribute.',                              name: 'Diane F.',    loc: 'Any',            time: '3d ago' },
-  ],
-  global: [
-    { id: 11, type: 'offer', cat: 'tech',       title: 'Free web development for mutual aid orgs',  body: 'Full-stack developer, 10 years experience. Will build or fix websites for mutual aid organizations, community groups, and cooperatives. No charge.',                               name: 'Lena V.',      loc: 'Remote',         time: '1h ago' },
-    { id: 12, type: 'need',  cat: 'tech',       title: 'Help automating volunteer tracking',        body: 'Need someone to help set up a Google Sheet to track volunteers and shifts automatically. I\'m not a developer. Even a few hours of guidance would help.',                          name: 'Priya N.',     loc: 'Remote',         time: '4h ago' },
-    { id: 13, type: 'offer', cat: 'legal',      title: 'Tenant rights consultations',               body: 'Paralegal, 8 years of tenant rights experience. Happy to answer questions about eviction defense, lease review, and housing rights. Free.',                                       name: 'Amir H.',      loc: 'Remote',         time: '5h ago' },
-    { id: 14, type: 'need',  cat: 'advice',     title: 'Navigating disability benefits',            body: 'Just applied for SSDI and the process is overwhelming. Looking for someone who has been through it who can help me understand what to expect.',                                    name: 'Carla W.',    loc: 'Remote',         time: '8h ago' },
-    { id: 15, type: 'offer', cat: 'art',        title: 'Graphic design for community orgs',        body: 'Graphic designer. Free flyers, social media graphics, and logos for mutual aid groups, unions, and community organizations. I do this because I believe in it.',                  name: 'Sam K.',       loc: 'Remote',         time: '1d ago' },
-    { id: 16, type: 'need',  cat: 'writing',    title: 'Help writing a housing complaint letter',   body: 'My landlord violated our lease and I need help writing a formal complaint to the housing authority. I know what happened, I just need help with the language.',                   name: 'Chen W.',      loc: 'Remote',         time: '1d ago' },
-    { id: 17, type: 'offer', cat: 'education',  title: 'ESL tutoring — all levels',                body: 'Native English speaker, taught ESL for 5 years. One-on-one or small group over video call. Free. Happy to work around your schedule.',                                              name: 'Brianna T.',   loc: 'Remote',         time: '2d ago' },
-    { id: 18, type: 'need',  cat: 'tech',       title: 'Need someone to review my resume',         body: 'Been out of work for 8 months. Would really appreciate an honest review of my resume from someone in tech or healthcare. I just need to know what to fix.',                       name: 'Marcus D.',    loc: 'Remote',         time: '2d ago' },
-    { id: 19, type: 'offer', cat: 'advice',     title: 'Workplace organizing support',             body: 'Experienced union organizer. Can help workers who want to organize their workplace — strategy, legal basics, what to expect, how to protect yourselves.',                          name: 'Rafael M.',    loc: 'Remote',         time: '3d ago' },
-    { id: 20, type: 'need',  cat: 'legal',      title: 'Wage theft — where do I start?',          body: 'My employer owes me three weeks of pay and stopped responding. I don\'t know how to pursue this or whether I can afford to. Looking for someone who knows this area.',             name: 'Tony R.',    loc: 'Remote',         time: '3d ago' },
-  ]
-};
 
 const filterSets = {
   local:  ['all','food','cleaning','transport','housing','healthcare','infrastructure','other'],
@@ -808,7 +645,7 @@ const filterLabels = {
 let currentTab    = 'local';
 let currentFilter = 'all';
 let boardReady    = false;
-
+let boardData = { local: [], global: [] };
 
 /* ── RSVP STATE ── */
 const rsvpSet = new Set(); // event ids the current user has RSVP'd to
@@ -884,54 +721,54 @@ async function submitReport(contentType, contentId) {
 
 
 
-function toggleRsvp(evId, orgId, btn) {
-  requireAuth(() => {
-    // Check membership — for demo, allow if joined or if in joinedOrgs
-    // In production this would check the backend
-    const isMember = joinedOrgs.has(orgId);
-    if (!isMember) {
-      showToast('You need to be a member to RSVP. Request to join first.');
-      return;
-    }
+// function toggleRsvp(evId, orgId, btn) {
+//   requireAuth(() => {
+//     // Check membership — for demo, allow if joined or if in joinedOrgs
+//     // In production this would check the backend
+//     const isMember = joinedOrgs.has(orgId);
+//     if (!isMember) {
+//       showToast('You need to be a member to RSVP. Request to join first.');
+//       return;
+//     }
 
-    // Find the event across all orgs
-    const allOrgs = [...localOrgs, ...globalOrgs];
-    let ev = null;
-    for (const org of allOrgs) {
-      ev = org.events?.find(e => e.id === evId);
-      if (ev) break;
-    }
-    if (!ev) return;
+//     // Find the event across all orgs
+//     const allOrgs = [...localOrgs, ...globalOrgs];
+//     let ev = null;
+//     for (const org of allOrgs) {
+//       ev = org.events?.find(e => e.id === evId);
+//       if (ev) break;
+//     }
+//     if (!ev) return;
 
-    if (rsvpSet.has(evId)) {
-      // Cancel RSVP
-      rsvpSet.delete(evId);
-      ev.rsvpCount = Math.max(0, ev.rsvpCount - 1);
-      btn.textContent = 'RSVP';
-      btn.classList.remove('rsvp-btn-going');
-      showToast('RSVP cancelled.');
-    } else {
-      // Check capacity
-      if (ev.capacity !== null && ev.rsvpCount >= ev.capacity) {
-        showToast('This event is full.');
-        return;
-      }
-      rsvpSet.add(evId);
-      ev.rsvpCount++;
-      btn.textContent = '✓ Going';
-      btn.classList.add('rsvp-btn-going');
-      showToast('You\'re going! We\'ll remind you closer to the date.');
-    }
+//     if (rsvpSet.has(evId)) {
+//       // Cancel RSVP
+//       rsvpSet.delete(evId);
+//       ev.rsvpCount = Math.max(0, ev.rsvpCount - 1);
+//       btn.textContent = 'RSVP';
+//       btn.classList.remove('rsvp-btn-going');
+//       showToast('RSVP cancelled.');
+//     } else {
+//       // Check capacity
+//       if (ev.capacity !== null && ev.rsvpCount >= ev.capacity) {
+//         showToast('This event is full.');
+//         return;
+//       }
+//       rsvpSet.add(evId);
+//       ev.rsvpCount++;
+//       btn.textContent = '✓ Going';
+//       btn.classList.add('rsvp-btn-going');
+//       showToast('You\'re going! We\'ll remind you closer to the date.');
+//     }
 
-    // Update the spots display
-    const spotsEl = btn.closest('.od-event')?.querySelector('.ev-spots');
-    if (spotsEl && ev.capacity !== null) {
-      const spots = ev.capacity - ev.rsvpCount;
-      spotsEl.textContent = spots === 0 ? 'Full' : `${spots} spot${spots === 1 ? '' : 's'} left`;
-      spotsEl.classList.toggle('ev-spots-full', spots === 0);
-    }
-  });
-}
+//     // Update the spots display
+//     const spotsEl = btn.closest('.od-event')?.querySelector('.ev-spots');
+//     if (spotsEl && ev.capacity !== null) {
+//       const spots = ev.capacity - ev.rsvpCount;
+//       spotsEl.textContent = spots === 0 ? 'Full' : `${spots} spot${spots === 1 ? '' : 's'} left`;
+//       spotsEl.classList.toggle('ev-spots-full', spots === 0);
+//     }
+//   });
+// }
 function initBoard() {
   if (boardReady) return;
   boardReady = true;
@@ -962,15 +799,33 @@ function switchTab(tab) {
   fetchAndRenderCards();
 }
 
-function renderSidebar() {
-  const orgs = currentTab === 'local' ? localOrgs : globalOrgs;
-  document.getElementById('sidebar-orgs').innerHTML = orgs.map(o => `
-    <div class="sidebar-org" onclick="openOrgDetail('${o.id}', 'board')">
-      <div class="so-name">${o.emoji} ${o.name}</div>
-      <div class="so-desc">${o.desc}</div>
-      <div class="so-meta">${o.members} members · ${o.location}</div>
-    </div>
-  `).join('');
+async function renderSidebar() {
+  const el = document.getElementById('sidebar-orgs');
+  el.innerHTML = '<div class="so-loading">Loading…</div>';
+
+  try {
+    const res = await fetch(`${API}/orgs?scope=${currentTab}`, {
+      credentials: 'include'
+    });
+    const data = await res.json();
+    const orgs = (data.orgs || []).slice(0, 5);
+
+    if (!orgs.length) {
+      el.innerHTML = '<div class="so-loading">No groups yet.</div>';
+      return;
+    }
+
+    el.innerHTML = orgs.map(o => `
+      <div class="sidebar-org" onclick="openOrgDetail('${o.slug}', 'board')">
+        <div class="so-name">🤝 ${o.name}</div>
+        <div class="so-desc">${o.description}</div>
+        <div class="so-meta">${o.member_count} members · ${o.location || 'Remote'}</div>
+      </div>
+    `).join('');
+
+  } catch (err) {
+    el.innerHTML = '<div class="so-loading">Could not load groups.</div>';
+  }
 }
 
 function renderFilters() {
@@ -1054,7 +909,7 @@ function renderCards() {
       <div class="card-title">${p.title}</div>
       <div class="card-body">${p.body}</div>
       <div class="card-footer">
-        <div class="card-meta"><span class="card-name" onclick="openProfileModal('${p.username}')">${p.name}</span>
+        <div class="card-meta"><span class="card-name" onclick="openProfileModal('${p.username}')">${p.name}</span></div>
         <div class="card-actions">
           <button class="card-report-btn" onclick="openReport('post', ${p.id}, '${p.title}')" title="Report this post">⚑</button>
           <button class="card-cta" onclick="respondToPost(${p.user_id}, '${p.name}', '${p.title}')">Respond</button>
@@ -1593,6 +1448,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         is_admin: data.user.is_admin
       };
       updateNavAuth();
+      loadInbox();
     }
   } catch (err) {
     console.error('Session check failed:', err);
@@ -1760,6 +1616,7 @@ async function loadInbox() {
 
     inboxThreads = data.threads;
     renderInbox();
+    updateInboxBadge();
 
   } catch (err) {
     console.error('Load inbox error:', err);
@@ -1802,6 +1659,18 @@ function renderInbox() {
   // Auto open first thread
   if (inboxThreads.length > 0) {
     openThreadById(inboxThreads[0].id);
+  }
+}
+
+function updateInboxBadge() {
+  const badge = document.getElementById('inbox-badge');
+  if (!badge) return;
+  const total = inboxThreads.reduce((sum, t) => sum + (parseInt(t.unread_count) || 0), 0);
+  if (total > 0) {
+    badge.textContent = total;
+    badge.style.display = '';
+  } else {
+    badge.style.display = 'none';
   }
 }
 
@@ -1853,6 +1722,10 @@ async function openThreadById(threadId) {
     document.getElementById('inbox-compose').style.display = 'flex';
     document.getElementById('inbox-compose-input').placeholder = `Message ${otherName}…`;
     window.currentThreadId = threadId;
+
+    // Mark thread as read locally and update badge
+    const t = inboxThreads.find(t => t.id === threadId);
+    if (t) { t.unread_count = 0; updateInboxBadge(); }
 
   } catch (err) {
     console.error('Open thread error:', err);
