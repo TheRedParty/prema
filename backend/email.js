@@ -6,17 +6,17 @@ async function sendVerificationEmail(email, username, token) {
   const verifyUrl = `http://localhost:3000/api/auth/verify/${token}`;
 
   await resend.emails.send({
-    from: 'noreply@carino.red',
+    from: 'noreply@prema.red',
     to: email,
-    subject: 'Verify your Cariño account',
+    subject: 'Verify your Prema account',
     html: `
       <div style="font-family: sans-serif; max-width: 480px; margin: 0 auto;">
-        <h2>Welcome to Cariño, ${username}</h2>
+        <h2>Welcome to Prema, ${username}</h2>
         <p>Thanks for signing up. Click the link below to verify your email address and activate your account.</p>
         <a href="${verifyUrl}" style="display: inline-block; background: #BB0000; color: white; padding: 12px 24px; text-decoration: none; margin: 16px 0;">
           Verify my account →
         </a>
-        <p style="color: #666; font-size: 14px;">This link expires in 24 hours. If you didn't sign up for Cariño, you can ignore this email.</p>
+        <p style="color: #666; font-size: 14px;">This link expires in 24 hours. If you didn't sign up for Prema, you can ignore this email.</p>
       </div>
     `
   });
@@ -27,13 +27,13 @@ async function sendPasswordResetEmail(email, username, token) {
   const resetUrl = `http://localhost:3000/api/auth/reset-password/${token}`;
 
   await resend.emails.send({
-    from: 'noreply@carino.red',
+    from: 'noreply@prema.red',
     to: email,
-    subject: 'Reset your Cariño password',
+    subject: 'Reset your Prema password',
     html: `
       <div style="font-family: sans-serif; max-width: 480px; margin: 0 auto;">
         <h2>Password Reset</h2>
-        <p>Hi ${username}, we received a request to reset your Cariño password.</p>
+        <p>Hi ${username}, we received a request to reset your Prema password.</p>
         <a href="${resetUrl}" style="display: inline-block; background: #BB0000; color: white; padding: 12px 24px; text-decoration: none; margin: 16px 0;">
           Reset my password →
         </a>

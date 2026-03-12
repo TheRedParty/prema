@@ -17,7 +17,7 @@ const adminRoutes = require('./routes/admin');
 
 // Middleware
 app.use(cors({
-  origin: ['http://localhost:5500', 'http://127.0.0.1:5500'],
+  origin: ['http://localhost:5500', 'http://127.0.0.1:5500', 'https://prema.red'],
   credentials: true
 }));
 app.use(express.json());
@@ -42,7 +42,7 @@ app.use('/api/admin', adminRoutes);
 
 // Health check
 app.get('/api/health', (req, res) => {
-  res.json({ status: 'ok', message: 'Cariño backend is running' });
+  res.json({ status: 'ok', message: 'Prema backend is running' });
 });
 
 // Start server

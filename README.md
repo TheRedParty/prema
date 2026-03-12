@@ -1,6 +1,6 @@
-# Cariño
+# Prema
 
-**A free mutual aid tool at [carino.red](https://carino.red)**
+**A free mutual aid tool at [prema.red](https://prema.red)**
 
 Post what you need. Post what you can give. No middleman. Just people.
 
@@ -10,15 +10,15 @@ Built and maintained by [The Red Party](https://theparty.red). Open to everyone 
 
 ## What It Is
 
-Cariño (Spanish for *tenderness*) is a community platform for mutual aid — the everyday practice of neighbors helping neighbors. You post what you can offer or what you need. Others respond. Real help happens. No money changes hands for services. No followers. No algorithm. No means test.
+Prema (Sanskrit for *unconditional love*) is a community platform for mutual aid — the everyday practice of neighbors helping neighbors. You post what you can offer or what you need. Others respond. Real help happens. No money changes hands for services. No followers. No algorithm. No means test.
 
 Local and global scopes: in-person help tied to a neighborhood, and remote skills available to anyone anywhere.
 
 ## Current Status
 
-**Front-end prototype — complete.**
+**In active development.**
 
-The full intended user experience. All features listed below are functional in the front-end. Backend, database, and real auth are planned next.
+Frontend is complete and wired to real API endpoints. Backend is in progress — Node.js / Express and PostgreSQL.
 
 ---
 
@@ -38,7 +38,7 @@ The full intended user experience. All features listed below are functional in t
 - Org announcements separate from events
 
 ### Messaging
-- On-platform inbox — all contact stays on Cariño
+- On-platform inbox — all contact stays on Prema
 - Thread-based conversations tied to posts
 - Completion flow: mark as done → confirm → unlock thank you notes and vouching
 
@@ -61,21 +61,22 @@ The full intended user experience. All features listed below are functional in t
 
 ## Tech Stack
 
-### Current (front-end prototype)
+### Frontend
 - Vanilla HTML, CSS, JavaScript — no framework
 - Single page app — JS handles all routing and rendering
-- Served as static files via nginx on DigitalOcean
 
-### Planned (backend)
+### Backend
 - **Node.js / Express** — API and auth
 - **PostgreSQL** — database
-- **Resend** — transactional email (verification, notifications)
-- Same DigitalOcean droplet, nginx as reverse proxy
+- **bcrypt** — password hashing (cost 12)
+- **express-session** — httpOnly cookies, 30-day expiry
+- **Resend** — transactional email (verification, password reset)
 
 ### Infrastructure
 - DigitalOcean — Ubuntu 24.04 LTS, NYC region
+- nginx — reverse proxy
 - Let's Encrypt SSL via certbot (auto-renewing)
-- Both `carino.red` and `theparty.red` on the same droplet
+- Both `prema.red` and `theparty.red` on the same droplet
 
 ---
 
@@ -92,31 +93,39 @@ Soviet propaganda poster aesthetic — warm and direct, not a tech product. Red 
 ## File Structure
 
 ```
-index.html        — full single-page app markup
-script.js         — all JavaScript (~1400 lines)
-style.css         — all styles
-changelog.txt     — full history of every change
-README.md         — this file
+frontend/
+  index.html        — full single-page app markup
+  script.js         — all JavaScript
+  style.css         — all styles
+  changelog.txt     — full history of every change
+backend/
+  server.js         — Express app entry point
+  db.js             — PostgreSQL connection
+  email.js          — Resend transactional email
+  routes/
+    auth.js         — signup, signin, verify, password reset
+    posts.js        — board posts CRUD
+    messages.js     — inbox, threads, completion flow
+    users.js        — profiles, settings
+    orgs.js         — org directory and management
+    admin.js        — admin dashboard
 ```
 
 ---
 
 ## What's Next
 
-- [ ] Admin dashboard (planned, not started — needs its own design session)
-- [x] Node.js / Express backend
-- [x] PostgreSQL database and schema
-- [x] Real auth (bcrypt, session tokens, httpOnly cookies)
-- [x] Email verification via Resend
-- [x] Real post creation and persistence
-- [ ] Organization management
-- [ ] Notification system
+- [ ] Org admin UI — post announcements, create events, manage members (backend routes complete)
+- [ ] Password reset flow — backend complete, not yet wired to frontend
+- [ ] Thank you notes and vouches flow — backend complete, not yet wired to frontend
+- [ ] Admin dashboard CSS styling — functional but unstyled
+- [ ] Deploy to prema.red
 
 ---
 
 ## Values
 
-Cariño does not tolerate intolerance. People or ideas that demean, exclude, or harm others based on who they are have no place here. Openness is not the same as allowing everything — a community built on love and care has no obligation to platform hate.
+Prema does not tolerate intolerance. People or ideas that demean, exclude, or harm others based on who they are have no place here. Openness is not the same as allowing everything — a community built on love and care has no obligation to platform hate.
 
 ---
 
@@ -124,7 +133,6 @@ Cariño does not tolerate intolerance. People or ideas that demean, exclude, or 
 
 The Red Party — [theparty.red](https://theparty.red)
 
-
 ---
 
-*"The everyday love between neighbors. Not romantic, not grand. The love of someone making you food, giving you a ride, offering their time freely."*
+*"From everyone with an ability, to everyone with a need."*

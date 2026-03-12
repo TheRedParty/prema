@@ -1,6 +1,15 @@
-CARIÑO FRONT END CHANGELOG
-carino.red · Mutual Aid Tool by The Red Party
+PREMA CHANGELOG
+prema.red · Mutual Aid Tool by The Red Party
 ═══════════════════════════════════════════════════════════════
+
+
+[2026-03-11] PROJECT RENAME — Cariño → Prema
+──────────────────────────────────────────────
+- Project renamed from Cariño to Prema
+- Prema is Sanskrit for unconditional love
+- New domain: prema.red (was carino.red)
+- All branding, copy, and config updated across frontend and backend
+- GitHub repo renamed from TheRedParty/carino to TheRedParty/prema
 
 
 [2026-02-28] CATEGORIES — Cleaning + Comrade Support
