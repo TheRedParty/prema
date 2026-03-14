@@ -2,6 +2,50 @@ PREMA CHANGELOG
 prema.red · Mutual Aid Tool by The Red Party
 ═══════════════════════════════════════════════════════════════
 
+[2026-03-14] SCHEMA — Missing Columns
+───────────────────────────────────────
+- Added type VARCHAR(50) DEFAULT 'event' to events table
+- Added created_at TIMESTAMPTZ DEFAULT NOW() to org_members table
+- Both added via ALTER TABLE on droplet and updated in schema.sql
+
+
+[2026-03-14] ORG ADMIN UI
+───────────────────────────
+- Org admins see Members tab on org detail page
+- Members tab shows pending join requests (approve/reject) and active members (promote to admin)
+- Post Announcement button/form in Announcements tab (org admins only)
+- Create Event button/form in Events tab (org admins only)
+- Org Admin badge shown in sidebar for org admins
+- Added currentOrgSlug + currentOrgFromPage state vars for clean page reload after actions
+
+
+[2026-03-14] ROUTING — Real URLs
+──────────────────────────────────
+- Added client-side router — reads URL on page load and navigates accordingly
+- showPage() now pushes browser history
+- openOrgDetail() updates URL to /orgs/:slug
+- viewProfile() updates URL to /users/:username
+- popstate listener handles back/forward buttons
+- /reset-password/:token route opens reset modal automatically
+
+
+[2026-03-14] ORG DETAIL — Layout
+──────────────────────────────────
+- About section now static below the hero, always visible
+- Announcements and Events are now the two primary tabs
+- Announcements is the default active tab
+
+
+[2026-03-14] AUTH — Password Reset + Form UX
+─────────────────────────────────────────────
+- Forgot password link added to sign in modal
+- Forgot password modal + submitForgotPassword() wired to POST /api/auth/forgot-password
+- Reset password modal + submitResetPassword() wired to POST /api/auth/reset-password/:token
+- email.js reset link updated to point to frontend /reset-password/:token
+- Confirm password field added to signup step 1
+- Enter key submits on all sign in, forgot password, and reset password inputs
+- Enter key advances signup step 1
+
 [2026-03-14] Add org admin UI — announcements, events, member management
 ──────────────────────────────────────────────
 - Org admins see Members tab, Post Announcement, and Create Event controls on org detail page

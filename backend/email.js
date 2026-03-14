@@ -24,7 +24,7 @@ async function sendVerificationEmail(email, username, token) {
 
 async function sendPasswordResetEmail(email, username, token) {
     const resend = new Resend(process.env.RESEND_API_KEY);
-  const resetUrl = `${process.env.BASE_URL}/api/auth/reset-password/${token}`;
+  const resetUrl = `${process.env.BASE_URL}/reset-password/${token}`;
 
   await resend.emails.send({
     from: 'noreply@prema.red',

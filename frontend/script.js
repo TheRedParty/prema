@@ -131,6 +131,15 @@ async function router() {
     return;
   }
 
+  // /reset-password/:token
+  const resetMatch = path.match(/^\/reset-password\/([^/]+)$/);
+  if (resetMatch) {
+    showPage('board', false);
+    document.getElementById('modal-body').innerHTML = buildResetPasswordModal(resetMatch[1]);
+    document.getElementById('overlay').classList.add('open');
+    return;
+  }
+
   // Simple pages
   const pageMap = {
     '/':         'board',
@@ -288,14 +297,21 @@ function buildSignInModal() {
     <p class="modal-sub">Welcome back. The community needs you.</p>${hint}
     <div class="form-field">
       <label class="form-label">Email</label>
-      <input type="email" class="form-input" id="signin-email" placeholder="your@email.com">
+      <input type="email" class="form-input" id="signin-email" placeholder="your@email.com"
+        onkeydown="if(event.key==='Enter') submitSignIn()">
     </div>
     <div class="form-field">
       <label class="form-label">Password</label>
-      <input type="password" class="form-input" id="signin-password" placeholder="••••••••">
+      <input type="password" class="form-input" id="signin-password" placeholder="••••••••"
+        onkeydown="if(event.key==='Enter') submitSignIn()">
     </div>
     <button class="form-submit" onclick="submitSignIn()">Sign In →</button>
-    <p class="auth-switch">Don't have an account? <span class="auth-link" onclick="openModal('signup')">Create one →</span></p>
+    <p class="auth-switch">
+      Don't have an account? <span class="auth-link" onclick="openModal('signup')">Create one →</span>
+    </p>
+    <p class="auth-switch" style="margin-top:0.4rem">
+      <span class="auth-link" onclick="openModal('forgot-password')">Forgot your password?</span>
+    </p>
   `;
 }
 
@@ -341,6 +357,92 @@ async function submitSignIn() {
   }
 }
 
+/* ══════════════════════════════════════
+   FORGOT / RESET PASSWORD
+══════════════════════════════════════ */
+
+function buildForgotPasswordModal() {
+  return `
+    <div class="modal-title">Reset Password</div>
+    <p class="modal-sub">Enter your email and we'll send you a reset link.</p>
+    <div class="form-field">
+      <label class="form-label">Email</label>
+      <input type="email" class="form-input" id="forgot-email" placeholder="your@email.com"
+        onkeydown="if(event.key==='Enter') submitForgotPassword()">
+    </div>
+    <button class="form-submit" onclick="submitForgotPassword()">Send Reset Link →</button>
+    <p class="auth-switch">
+      <span class="auth-link" onclick="openModal('signin')">← Back to sign in</span>
+    </p>
+  `;
+}
+
+async function submitForgotPassword() {
+  const email = document.getElementById('forgot-email')?.value.trim();
+  if (!email) { showToast('Please enter your email.'); return; }
+
+  try {
+    await fetch(`${API}/auth/forgot-password`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email })
+    });
+    closeModal();
+    showToast('If that email exists, a reset link has been sent.');
+  } catch (err) {
+    console.error('Forgot password error:', err);
+    showToast('Could not connect to server.');
+  }
+}
+
+function buildResetPasswordModal(token) {
+  return `
+    <div class="modal-title">Choose a New Password</div>
+    <p class="modal-sub">Pick something you'll remember.</p>
+    <div class="form-field">
+      <label class="form-label">New Password</label>
+      <input type="password" class="form-input" id="reset-password" placeholder="••••••••"
+        onkeydown="if(event.key==='Enter') submitResetPassword('${token}')">
+    </div>
+    <div class="form-field">
+      <label class="form-label">Confirm New Password</label>
+      <input type="password" class="form-input" id="reset-password-confirm" placeholder="••••••••"
+        onkeydown="if(event.key==='Enter') submitResetPassword('${token}')">
+    </div>
+    <button class="form-submit" onclick="submitResetPassword('${token}')">Set New Password →</button>
+  `;
+}
+
+async function submitResetPassword(token) {
+  const password = document.getElementById('reset-password')?.value.trim();
+  const confirm  = document.getElementById('reset-password-confirm')?.value.trim();
+  if (!password || !confirm) { showToast('Please fill in both fields.'); return; }
+  if (password !== confirm)  { showToast('Passwords do not match.'); return; }
+
+  try {
+    const res = await fetch(`${API}/auth/reset-password/${token}`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ password })
+    });
+
+    const data = await res.json();
+
+    if (!res.ok) {
+      showToast(data.error || 'Could not reset password.');
+      return;
+    }
+
+    closeModal();
+    showToast('Password updated. You can now sign in.');
+    openModal('signin');
+    window.history.replaceState({}, '', '/');
+  } catch (err) {
+    console.error('Reset password error:', err);
+    showToast('Could not connect to server.');
+  }
+}
+
 let signupData = {};
 
 function buildSignUpModal(step) {
@@ -352,15 +454,23 @@ function buildSignUpModal(step) {
     <p class="modal-sub">Free, always. No catch.</p>
     <div class="form-field">
       <label class="form-label">Username</label>
-      <input type="text" class="form-input" id="su-username" placeholder="how others will find you">
+      <input type="text" class="form-input" id="su-username" placeholder="how others will find you"
+        onkeydown="if(event.key==='Enter') signupNext(1)">
     </div>
     <div class="form-field">
       <label class="form-label">Email</label>
-      <input type="email" class="form-input" id="su-email" placeholder="your@email.com">
+      <input type="email" class="form-input" id="su-email" placeholder="your@email.com"
+        onkeydown="if(event.key==='Enter') signupNext(1)">
     </div>
     <div class="form-field">
       <label class="form-label">Password</label>
-      <input type="password" class="form-input" id="su-password" placeholder="••••••••">
+      <input type="password" class="form-input" id="su-password" placeholder="••••••••"
+        onkeydown="if(event.key==='Enter') signupNext(1)">
+    </div>
+    <div class="form-field">
+      <label class="form-label">Confirm Password</label>
+      <input type="password" class="form-input" id="su-password-confirm" placeholder="••••••••"
+        onkeydown="if(event.key==='Enter') signupNext(1)">
     </div>
     <button class="form-submit" onclick="signupNext(1)">Continue →</button>
     <p class="auth-switch">Already have an account? <span class="auth-link" onclick="openModal('signin')">Sign in →</span></p>
@@ -425,7 +535,9 @@ function signupNext(step) {
     const username = document.getElementById('su-username')?.value.trim();
     const email    = document.getElementById('su-email')?.value.trim();
     const password = document.getElementById('su-password')?.value.trim();
-    if (!username || !email || !password) { showToast('Please fill in all fields.'); return; }
+    const confirm  = document.getElementById('su-password-confirm')?.value.trim();
+    if (!username || !email || !password || !confirm) { showToast('Please fill in all fields.'); return; }
+    if (password !== confirm) { showToast('Passwords do not match.'); return; }
     signupData.username = username;
     signupData.email    = email;
     signupData.password = password;
@@ -532,6 +644,7 @@ function handleOverlay(e) {
 function buildModal(type) {
   if (type === 'signin') return buildSignInModal();
   if (type === 'signup') return buildSignUpModal(1);
+  if (type === 'forgot-password') return buildForgotPasswordModal();
   if (type === 'post-need') {
     return `
       <div class="modal-title">Post a Need</div>
@@ -1221,11 +1334,16 @@ async function openOrgDetail(slug, fromPage) {
           <p class="page-hero-sub">${org.member_count} members · ${org.location || 'Remote'}</p>
         </div>
       </div>
+
+      <div class="od-about-static">
+            <p class="od-about">${org.description || ''}</p>
+            ${org.values_statement ? `<p class="od-about" style="margin-top:1rem;opacity:0.7">${org.values_statement}</p>` : ''}
+      </div>
+
       <div class="org-detail-body">
         <div>
           <div class="od-tabs">
-            <button class="od-tab active" onclick="switchOdTab('about', this)">About</button>
-            <button class="od-tab" onclick="switchOdTab('announcements', this)">
+            <button class="od-tab active" onclick="switchOdTab('announcements', this)">
               Announcements${annCount > 0 ? ` <span class="od-tab-badge">${annCount}</span>` : ''}
             </button>
             <button class="od-tab" onclick="switchOdTab('events', this)">
@@ -1234,12 +1352,7 @@ async function openOrgDetail(slug, fromPage) {
             ${membersTabBtn}
           </div>
 
-          <div class="od-tab-panel" id="od-panel-about">
-            <p class="od-about">${org.description || ''}</p>
-            ${org.values_statement ? `<p class="od-about" style="margin-top:1rem;opacity:0.7">${org.values_statement}</p>` : ''}
-          </div>
-
-          <div class="od-tab-panel od-tab-panel-hidden" id="od-panel-announcements">
+          <div class="od-tab-panel" id="od-panel-announcements">
             ${annAdminHTML}
             <div class="od-announcements">${annHTML}</div>
           </div>

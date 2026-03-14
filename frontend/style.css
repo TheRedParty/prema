@@ -2436,6 +2436,13 @@ nav {
   padding: 1rem 0;
 }
 
+.od-about-static {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 1.5rem 2.5rem 1.5rem;
+  border-bottom: 1px solid rgba(237,224,196,0.08);
+}
+
 /* ── ORG ADMIN FORMS ── */
 .od-admin-toggle {
   display: inline-block;
