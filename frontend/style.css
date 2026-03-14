@@ -2064,8 +2064,26 @@ nav {
 .inbox-compose-send:hover { background: var(--red-deep); }
 
 @media (max-width: 680px) {
-  .inbox-shell { grid-template-columns: 1fr; height: auto; }
-  .inbox-sidebar { max-height: 260px; }
+  .inbox-shell {
+    grid-template-columns: 1fr;
+    height: calc(100vh - var(--nav-h));
+    max-height: none;
+    margin: calc(var(--nav-h)) auto 0;
+    grid-template-rows: auto 1fr;
+    border: none;
+  }
+  .inbox-sidebar {
+    max-height: 220px;
+    border-right: none;
+    border-bottom: 1px solid rgba(237,224,196,0.08);
+  }
+  .inbox-main {
+    min-height: 0;
+    overflow: hidden;
+  }
+  .inbox-messages {
+    overflow-y: auto;
+  }
   .profile-body { grid-template-columns: 1fr; padding: 1.5rem; }
   .profile-hero-inner { flex-direction: column; }
   .nav-profile-name { display: none; }
