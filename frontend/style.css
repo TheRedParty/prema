@@ -2065,33 +2065,32 @@ nav {
 
 @media (max-width: 680px) {
   .inbox-shell {
-    grid-template-columns: 1fr;
+    display: flex;
+    flex-direction: column;
     height: calc(100vh - var(--nav-h));
     max-height: none;
     margin: var(--nav-h) auto 0;
     border: none;
-    position: relative;
+    overflow: hidden;
   }
   .inbox-sidebar {
-    position: absolute;
-    inset: 0;
+    flex: 1;
     max-height: none;
     border-right: none;
-    border-bottom: none;
-    z-index: 1;
-  }
-  .inbox-main {
-    position: absolute;
-    inset: 0;
-    display: none;
-    flex-direction: column;
-    z-index: 2;
-  }
-  .inbox-main.mobile-open {
-    display: flex;
+    overflow-y: auto;
   }
   .inbox-sidebar.mobile-hidden {
     display: none;
+  }
+  .inbox-main {
+    display: none;
+    flex-direction: column;
+    flex: 1;
+    min-height: 0;
+    overflow: hidden;
+  }
+  .inbox-main.mobile-open {
+    display: flex;
   }
   .inbox-mobile-back {
     display: flex;

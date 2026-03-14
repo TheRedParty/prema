@@ -2358,7 +2358,7 @@ function renderInbox() {
     .join("");
 
   // Auto open first thread
-  if (inboxThreads.length > 0) {
+  if (inboxThreads.length > 0 && !isMobile()) {
     openThreadById(inboxThreads[0].id);
   }
 }
