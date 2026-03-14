@@ -2086,6 +2086,12 @@ nav {
     min-height: 0;
     overflow: hidden;
   }
+  .inbox-shell.show-thread .inbox-main {
+    display: flex;
+  }
+  .inbox-shell.show-thread .inbox-sidebar {
+    display: none;
+  }
   .inbox-mobile-back {
     display: flex;
     align-items: center;

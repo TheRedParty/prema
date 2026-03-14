@@ -2324,8 +2324,7 @@ async function loadInbox() {
 
 function renderInbox() {
   if (isMobile()) {
-    document.getElementById("inbox-sidebar").style.display = "flex";
-    document.getElementById("inbox-main").style.display = "none";
+    document.querySelector(".inbox-shell").classList.remove("show-thread");
   }
   const threadList = document.getElementById("inbox-thread-list");
   if (!threadList) return;
@@ -2384,13 +2383,11 @@ function updateInboxBadge() {
 
 async function openThreadById(threadId) {
   if (isMobile()) {
-    document.getElementById("inbox-sidebar").style.display = "none";
-    document.getElementById("inbox-main").style.display = "flex";
+    document.querySelector(".inbox-shell").classList.add("show-thread");
   }
 
   function closeMobileThread() {
-    document.getElementById("inbox-sidebar").style.display = "flex";
-    document.getElementById("inbox-main").style.display = "none";
+    document.querySelector(".inbox-shell").classList.remove("show-thread");
   }
 
   try {
