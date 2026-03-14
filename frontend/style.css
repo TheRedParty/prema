@@ -2068,26 +2068,52 @@ nav {
     grid-template-columns: 1fr;
     height: calc(100vh - var(--nav-h));
     max-height: none;
-    margin: calc(var(--nav-h)) auto 0;
-    grid-template-rows: auto 1fr;
+    margin: var(--nav-h) auto 0;
     border: none;
+    position: relative;
   }
   .inbox-sidebar {
-    max-height: 220px;
+    position: absolute;
+    inset: 0;
+    max-height: none;
     border-right: none;
-    border-bottom: 1px solid rgba(237,224,196,0.08);
+    border-bottom: none;
+    z-index: 1;
   }
   .inbox-main {
-    min-height: 0;
-    overflow: hidden;
+    position: absolute;
+    inset: 0;
+    display: none;
+    flex-direction: column;
+    z-index: 2;
   }
-  .inbox-messages {
-    overflow-y: auto;
+  .inbox-main.mobile-open {
+    display: flex;
+  }
+  .inbox-sidebar.mobile-hidden {
+    display: none;
+  }
+  .inbox-mobile-back {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.75rem 1.25rem;
+    font-size: 0.65rem;
+    font-weight: 600;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--gold);
+    cursor: pointer;
+    border-bottom: 1px solid rgba(237,224,196,0.08);
+    flex-shrink: 0;
   }
   .profile-body { grid-template-columns: 1fr; padding: 1.5rem; }
   .profile-hero-inner { flex-direction: column; }
   .nav-profile-name { display: none; }
 }
+
+/* hide back button on desktop */
+.inbox-mobile-back { display: none; }
 
 /* ══════════════════════════════════════
    AUTH — SIGN IN BUTTON & MODALS
