@@ -2436,6 +2436,146 @@ nav {
   padding: 1rem 0;
 }
 
+/* ── ORG ADMIN FORMS ── */
+.od-admin-toggle {
+  display: inline-block;
+  margin-bottom: 1.2rem;
+  padding: 0.45rem 1rem;
+  background: transparent;
+  border: 1px solid var(--red);
+  color: var(--red);
+  font-family: var(--font-body);
+  font-size: 0.85rem;
+  letter-spacing: 0.04em;
+  cursor: pointer;
+  border-radius: 2px;
+  transition: background 0.15s, color 0.15s;
+}
+.od-admin-toggle:hover { background: var(--red); color: var(--parchment); }
+.od-admin-form {
+  background: rgba(187,0,0,0.06);
+  border: 1px solid rgba(187,0,0,0.2);
+  border-radius: 4px;
+  padding: 1rem;
+  margin-bottom: 1.2rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+}
+.od-admin-input,
+.od-admin-textarea,
+.od-admin-select {
+  background: rgba(28,24,16,0.6);
+  border: 1px solid rgba(237,224,196,0.2);
+  color: var(--parchment);
+  padding: 0.5rem 0.7rem;
+  font-family: var(--font-body);
+  font-size: 0.9rem;
+  border-radius: 3px;
+  width: 100%;
+  box-sizing: border-box;
+}
+.od-admin-textarea { resize: vertical; }
+.od-admin-select option { background: #1C1810; }
+.od-admin-form-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.6rem;
+}
+.od-admin-form-actions { display: flex; gap: 0.6rem; align-items: center; }
+.od-admin-btn {
+  padding: 0.45rem 1.1rem;
+  background: var(--red);
+  color: var(--parchment);
+  border: none;
+  font-family: var(--font-body);
+  font-size: 0.85rem;
+  cursor: pointer;
+  border-radius: 2px;
+  letter-spacing: 0.04em;
+  transition: opacity 0.15s;
+}
+.od-admin-btn:hover { opacity: 0.85; }
+.od-admin-btn-cancel {
+  background: transparent;
+  border: none;
+  color: rgba(237,224,196,0.5);
+  font-family: var(--font-body);
+  font-size: 0.85rem;
+  cursor: pointer;
+  padding: 0.45rem 0.5rem;
+}
+.od-admin-btn-cancel:hover { color: var(--parchment); }
+
+/* ── ORG ADMIN BADGE ── */
+.od-aside-admin-badge {
+  display: inline-block;
+  margin-bottom: 0.6rem;
+  padding: 0.25rem 0.65rem;
+  background: rgba(187,0,0,0.15);
+  border: 1px solid rgba(187,0,0,0.4);
+  color: var(--red);
+  font-size: 0.75rem;
+  letter-spacing: 0.08em;
+  border-radius: 2px;
+}
+
+/* ── MEMBER MANAGEMENT ── */
+.od-members-section-hd {
+  font-family: var(--font-display);
+  font-size: 0.8rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--gold);
+  padding: 0.5rem 0 0.4rem;
+  border-bottom: 1px solid rgba(201,168,76,0.2);
+  margin-bottom: 0.5rem;
+  margin-top: 0.5rem;
+}
+.od-members-section-hd:first-child { margin-top: 0; }
+.od-member-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.6rem 0;
+  border-bottom: 1px solid rgba(237,224,196,0.07);
+}
+.od-member-row:last-child { border-bottom: none; }
+.od-member-pending { background: rgba(201,168,76,0.04); padding-left: 0.4rem; }
+.od-member-info { display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap; }
+.od-member-name {
+  font-weight: 600;
+  color: var(--parchment);
+  cursor: pointer;
+  font-size: 0.9rem;
+}
+.od-member-name:hover { color: var(--gold); }
+.od-member-username { color: rgba(237,224,196,0.45); font-size: 0.8rem; }
+.od-member-admin-badge {
+  padding: 0.15rem 0.45rem;
+  background: rgba(187,0,0,0.15);
+  border: 1px solid rgba(187,0,0,0.35);
+  color: var(--red);
+  font-size: 0.7rem;
+  border-radius: 2px;
+  letter-spacing: 0.05em;
+}
+.od-member-actions { display: flex; gap: 0.4rem; flex-shrink: 0; }
+.od-member-btn {
+  padding: 0.3rem 0.75rem;
+  font-family: var(--font-body);
+  font-size: 0.78rem;
+  border-radius: 2px;
+  cursor: pointer;
+  border: 1px solid;
+  letter-spacing: 0.03em;
+  transition: opacity 0.15s;
+}
+.od-member-btn:hover { opacity: 0.8; }
+.od-member-approve { background: rgba(40,120,40,0.15); border-color: rgba(40,120,40,0.5); color: #7ecf7e; }
+.od-member-reject  { background: rgba(187,0,0,0.1);   border-color: rgba(187,0,0,0.4);   color: #e07070; }
+.od-member-promote { background: transparent;          border-color: rgba(201,168,76,0.4); color: var(--gold); }
+
 /* ══════════════════════════════════════
    INBOX — COMPLETION FLOW
 ══════════════════════════════════════ */

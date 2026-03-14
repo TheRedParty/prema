@@ -118,6 +118,9 @@ function showToast(msg) {
 let loggedIn = false;
 let currentUser = null;
 let pendingAction = null;
+let currentOrgSlug = null;
+let currentOrgFromPage = null;
+
 
 function requireAuth(action) {
   if (loggedIn) { action(); return; }
@@ -1051,6 +1054,9 @@ function switchOdTab(name, btn) {
 }
 
 async function openOrgDetail(slug, fromPage) {
+  currentOrgSlug = slug;
+  currentOrgFromPage = fromPage;
+
   try {
     const res = await fetch(`${API}/orgs/${slug}`, {
       credentials: 'include'
@@ -1065,18 +1071,20 @@ async function openOrgDetail(slug, fromPage) {
 
     const { org, announcements, events } = data;
 
-    // Check membership status if logged in
+    // Check membership status + role if logged in
     let memberStatus = 'none';
+    let isOrgAdmin = false;
     if (loggedIn) {
       const memRes = await fetch(`${API}/orgs/${org.id}/membership`, {
         credentials: 'include'
       });
       const memData = await memRes.json();
       memberStatus = memData.status || 'none';
+      isOrgAdmin = memData.role === 'admin' && memData.status === 'active';
     }
 
     const annCount = announcements.length;
-    const evCount = events.length;
+    const evCount  = events.length;
 
     const annHTML = annCount > 0 ? announcements.map(a => `
       <div class="od-announcement">
@@ -1103,12 +1111,60 @@ async function openOrgDetail(slug, fromPage) {
       </div>
     `).join('') : '<p class="od-empty">No events yet.</p>';
 
-    const joinLabel = memberStatus === 'active' ? '✓ Member' 
-      : memberStatus === 'pending' ? '⧖ Request Pending' 
+    const joinLabel = memberStatus === 'active' ? '✓ Member'
+      : memberStatus === 'pending' ? '⧖ Request Pending'
       : 'Request to Join';
-    const joinClass = memberStatus === 'active' ? ' od-aside-join-joined' 
-      : memberStatus === 'pending' ? ' od-aside-join-pending' 
+    const joinClass = memberStatus === 'active' ? ' od-aside-join-joined'
+      : memberStatus === 'pending' ? ' od-aside-join-pending'
       : '';
+
+    const annAdminHTML = isOrgAdmin ? `
+      <div class="od-admin-form" id="od-ann-form" style="display:none">
+        <input class="od-admin-input" id="od-ann-title" placeholder="Announcement title" />
+        <textarea class="od-admin-textarea" id="od-ann-body" placeholder="What do you want to tell your members?" rows="3"></textarea>
+        <div class="od-admin-form-actions">
+          <button class="od-admin-btn" onclick="postAnnouncement(${org.id})">Post</button>
+          <button class="od-admin-btn-cancel" onclick="toggleOdForm('od-ann-form', 'od-ann-toggle')">Cancel</button>
+        </div>
+      </div>
+      <button class="od-admin-toggle" id="od-ann-toggle" onclick="toggleOdForm('od-ann-form', 'od-ann-toggle')">+ Post Announcement</button>
+    ` : '';
+
+    const evAdminHTML = isOrgAdmin ? `
+      <div class="od-admin-form" id="od-ev-form" style="display:none">
+        <input class="od-admin-input" id="od-ev-title" placeholder="Event title" />
+        <textarea class="od-admin-textarea" id="od-ev-desc" placeholder="Description (optional)" rows="2"></textarea>
+        <div class="od-admin-form-row">
+          <input class="od-admin-input" id="od-ev-date" type="datetime-local" />
+          <input class="od-admin-input" id="od-ev-location" placeholder="Location (optional)" />
+        </div>
+        <div class="od-admin-form-row">
+          <input class="od-admin-input" id="od-ev-capacity" type="number" placeholder="Capacity (optional)" min="1" />
+          <select class="od-admin-select" id="od-ev-type">
+            <option value="event">General Event</option>
+            <option value="action">Direct Action</option>
+            <option value="meeting">Meeting</option>
+            <option value="workshop">Workshop</option>
+            <option value="social">Social</option>
+          </select>
+        </div>
+        <div class="od-admin-form-actions">
+          <button class="od-admin-btn" onclick="createOrgEvent(${org.id})">Create Event</button>
+          <button class="od-admin-btn-cancel" onclick="toggleOdForm('od-ev-form', 'od-ev-toggle')">Cancel</button>
+        </div>
+      </div>
+      <button class="od-admin-toggle" id="od-ev-toggle" onclick="toggleOdForm('od-ev-form', 'od-ev-toggle')">+ Create Event</button>
+    ` : '';
+
+    const membersTabBtn = isOrgAdmin ? `
+      <button class="od-tab" onclick="switchOdTab('members', this)">Members</button>
+    ` : '';
+
+    const membersTabPanel = isOrgAdmin ? `
+      <div class="od-tab-panel od-tab-panel-hidden" id="od-panel-members">
+        <div id="od-members-list"><p class="od-empty">Loading members…</p></div>
+      </div>
+    ` : '';
 
     document.getElementById('page-org-detail').innerHTML = `
       <div class="page-hero-sm">
@@ -1128,6 +1184,7 @@ async function openOrgDetail(slug, fromPage) {
             <button class="od-tab" onclick="switchOdTab('events', this)">
               Events${evCount > 0 ? ` <span class="od-tab-badge">${evCount}</span>` : ''}
             </button>
+            ${membersTabBtn}
           </div>
 
           <div class="od-tab-panel" id="od-panel-about">
@@ -1136,12 +1193,16 @@ async function openOrgDetail(slug, fromPage) {
           </div>
 
           <div class="od-tab-panel od-tab-panel-hidden" id="od-panel-announcements">
+            ${annAdminHTML}
             <div class="od-announcements">${annHTML}</div>
           </div>
 
           <div class="od-tab-panel od-tab-panel-hidden" id="od-panel-events">
+            ${evAdminHTML}
             <div class="od-events">${evHTML}</div>
           </div>
+
+          ${membersTabPanel}
         </div>
 
         <aside class="org-detail-aside">
@@ -1149,7 +1210,8 @@ async function openOrgDetail(slug, fromPage) {
             <div class="od-aside-emoji">🤝</div>
             <div class="od-aside-name">${org.name}</div>
             <div class="od-aside-count">${org.member_count} members</div>
-            <button class="od-aside-join${joinClass}" id="od-join-btn" 
+            ${isOrgAdmin ? '<div class="od-aside-admin-badge">⚙ Org Admin</div>' : ''}
+            <button class="od-aside-join${joinClass}" id="od-join-btn"
               onclick="joinOrg(${org.id}, this)">${joinLabel}</button>
             <button class="od-aside-report" onclick="openReport('org','${org.name}')">⚑ Report this Organization</button>
             ${org.location ? `<div class="od-aside-lbl">Location</div><div class="od-aside-val">${org.location}</div>` : ''}
@@ -1160,19 +1222,16 @@ async function openOrgDetail(slug, fromPage) {
           </div>
         </aside>
       </div>
-      <footer class="site-footer">
-        <div class="footer-inner">
-          <div class="footer-logo">Prema</div>
-          <div class="footer-mid"><span>Unconditional love in action.</span></div>
-          <div class="footer-party">Brought to you by <a href="https://theparty.red" target="_blank">The Red Party</a></div>
-        </div>
-      </footer>
     `;
 
     showPage('org-detail');
 
+    if (isOrgAdmin) {
+      loadOrgMembers(org.id);
+    }
+
   } catch (err) {
-    console.error('Org detail error:', err);
+    console.error('Open org detail error:', err);
     showToast('Could not load organization.');
   }
 }
@@ -1229,6 +1288,178 @@ async function rsvpEvent(orgId, eventId, btn) {
   }
 }
 
+/* ══════════════════════════════════════
+   ORG ADMIN
+══════════════════════════════════════ */
+
+function toggleOdForm(formId, btnId) {
+  const form = document.getElementById(formId);
+  const btn  = document.getElementById(btnId);
+  if (!form) return;
+  const isHidden = form.style.display === 'none';
+  form.style.display = isHidden ? 'block' : 'none';
+  if (btn) btn.style.display = isHidden ? 'none' : 'inline-block';
+}
+
+async function postAnnouncement(orgId) {
+  const title = document.getElementById('od-ann-title')?.value.trim();
+  const body  = document.getElementById('od-ann-body')?.value.trim();
+  if (!title || !body) { showToast('Title and body are required.'); return; }
+
+  try {
+    const res = await fetch(`${API}/orgs/${orgId}/announcements`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      credentials: 'include',
+      body: JSON.stringify({ title, body })
+    });
+
+    if (res.ok) {
+      showToast('Announcement posted.');
+      openOrgDetail(currentOrgSlug, currentOrgFromPage);
+    } else {
+      const err = await res.json();
+      showToast(err.error || 'Could not post announcement.');
+    }
+  } catch (err) {
+    console.error('Post announcement error:', err);
+  }
+}
+
+async function createOrgEvent(orgId) {
+  const title    = document.getElementById('od-ev-title')?.value.trim();
+  const desc     = document.getElementById('od-ev-desc')?.value.trim();
+  const date     = document.getElementById('od-ev-date')?.value;
+  const location = document.getElementById('od-ev-location')?.value.trim();
+  const capacity = document.getElementById('od-ev-capacity')?.value;
+  const type     = document.getElementById('od-ev-type')?.value;
+  if (!title) { showToast('Event title is required.'); return; }
+
+  try {
+    const res = await fetch(`${API}/orgs/${orgId}/events`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      credentials: 'include',
+      body: JSON.stringify({
+        title,
+        description: desc,
+        event_date: date || null,
+        location,
+        capacity: capacity || null,
+        type
+      })
+    });
+
+    if (res.ok) {
+      showToast('Event created.');
+      openOrgDetail(currentOrgSlug, currentOrgFromPage);
+    } else {
+      const err = await res.json();
+      showToast(err.error || 'Could not create event.');
+    }
+  } catch (err) {
+    console.error('Create event error:', err);
+  }
+}
+
+async function loadOrgMembers(orgId) {
+  try {
+    const res = await fetch(`${API}/orgs/${orgId}/members`, {
+      credentials: 'include'
+    });
+
+    if (!res.ok) return;
+    const data = await res.json();
+    const list = document.getElementById('od-members-list');
+    if (!list) return;
+
+    const pending = data.members.filter(m => m.status === 'pending');
+    const active  = data.members.filter(m => m.status === 'active');
+
+    let html = '';
+
+    if (pending.length > 0) {
+      html += `<div class="od-members-section-hd">Pending Requests</div>`;
+      html += pending.map(m => `
+        <div class="od-member-row od-member-pending">
+          <div class="od-member-info">
+            <span class="od-member-name" onclick="openProfileModal('${m.username}')">${m.display_name || m.username}</span>
+            <span class="od-member-username">@${m.username}</span>
+          </div>
+          <div class="od-member-actions">
+            <button class="od-member-btn od-member-approve" onclick="manageMember(${orgId}, ${m.user_id}, 'approve', this)">Approve</button>
+            <button class="od-member-btn od-member-reject" onclick="manageMember(${orgId}, ${m.user_id}, 'reject', this)">Reject</button>
+          </div>
+        </div>
+      `).join('');
+    }
+
+    if (active.length > 0) {
+      html += `<div class="od-members-section-hd">Members</div>`;
+      html += active.map(m => `
+        <div class="od-member-row">
+          <div class="od-member-info">
+            <span class="od-member-name" onclick="openProfileModal('${m.username}')">${m.display_name || m.username}</span>
+            <span class="od-member-username">@${m.username}</span>
+            ${m.role === 'admin' ? '<span class="od-member-admin-badge">Admin</span>' : ''}
+          </div>
+          <div class="od-member-actions">
+            ${m.role !== 'admin' ? `<button class="od-member-btn od-member-promote" onclick="promoteOrgMember(${orgId}, ${m.user_id}, this)">Make Admin</button>` : ''}
+          </div>
+        </div>
+      `).join('');
+    }
+
+    if (!pending.length && !active.length) {
+      html = '<p class="od-empty">No members yet.</p>';
+    }
+
+    list.innerHTML = html;
+  } catch (err) {
+    console.error('Load members error:', err);
+  }
+}
+
+async function manageMember(orgId, userId, action, btn) {
+  try {
+    const res = await fetch(`${API}/orgs/${orgId}/members/${userId}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      credentials: 'include',
+      body: JSON.stringify({ action })
+    });
+
+    if (res.ok) {
+      showToast(action === 'approve' ? 'Member approved.' : 'Request rejected.');
+      loadOrgMembers(orgId);
+    } else {
+      const err = await res.json();
+      showToast(err.error || 'Could not update member.');
+    }
+  } catch (err) {
+    console.error('Manage member error:', err);
+  }
+}
+
+async function promoteOrgMember(orgId, userId, btn) {
+  if (!confirm('Promote this member to org admin?')) return;
+  try {
+    const res = await fetch(`${API}/orgs/${orgId}/members/${userId}/role`, {
+      method: 'PATCH',
+      credentials: 'include'
+    });
+
+    if (res.ok) {
+      showToast('Member promoted to org admin.');
+      loadOrgMembers(orgId);
+    } else {
+      const err = await res.json();
+      showToast(err.error || 'Could not promote member.');
+    }
+  } catch (err) {
+    console.error('Promote member error:', err);
+  }
+}
 
 /* ══════════════════════════════════════
    ADMIN DASHBOARD

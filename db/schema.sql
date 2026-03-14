@@ -145,6 +145,7 @@ CREATE TABLE public.events (
     is_recurring boolean DEFAULT false,
     capacity integer,
     rsvp_count integer DEFAULT 0,
+    type character varying(50) DEFAULT 'event'::character varying,
     created_at timestamp without time zone DEFAULT now(),
     is_removed boolean DEFAULT false
 );
@@ -307,7 +308,8 @@ CREATE TABLE public.org_members (
     user_id integer,
     role character varying(20) DEFAULT 'member'::character varying,
     status character varying(20) DEFAULT 'pending'::character varying,
-    joined_at timestamp without time zone DEFAULT now()
+    joined_at timestamp without time zone DEFAULT now(),
+    created_at timestamp without time zone DEFAULT now()
 );
 
 
