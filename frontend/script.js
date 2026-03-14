@@ -76,7 +76,19 @@ function discardChains() {
 /* ── PAGE ROUTING ── */
 let currentPage = 'board';
 
-function showPage(id) {
+function urlFor(id) {
+  const map = {
+    board:    '/',
+    orgs:     '/orgs',
+    inbox:    '/inbox',
+    settings: '/settings',
+    admin:    '/admin',
+    about:    '/about',
+  };
+  return map[id] || null;
+}
+
+function showPage(id, pushHistory = true) {
   document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
   document.querySelectorAll('.nav-link').forEach(l =>
     l.classList.toggle('active', l.dataset.page === id)
@@ -88,17 +100,51 @@ function showPage(id) {
     currentPage = id;
     document.getElementById('nav-links').classList.remove('open');
   }
-  // Hide hero whenever we navigate away; show it only on fresh board load
-  const hero = document.querySelector('.hero');
-  if (hero && id !== 'board') {
-    hero.classList.add('gone');
+  if (pushHistory) {
+    const url = urlFor(id);
+    if (url) window.history.pushState({ page: id }, '', url);
   }
-  if (id === 'board') initBoard();
-  if (id === 'orgs')  initOrgs();
-  if (id === 'admin') initAdmin();
-  if (id === 'inbox') loadInbox();
+  const hero = document.querySelector('.hero');
+  if (hero && id !== 'board') hero.classList.add('gone');
+  if (id === 'board')    initBoard();
+  if (id === 'orgs')     initOrgs();
+  if (id === 'admin')    initAdmin();
+  if (id === 'inbox')    loadInbox();
   if (id === 'settings') loadSettings();
 }
+
+/* ── ROUTER ── */
+async function router() {
+  const path = window.location.pathname;
+
+  // /orgs/some-slug
+  const orgMatch = path.match(/^\/orgs\/([^/]+)$/);
+  if (orgMatch) {
+    await openOrgDetail(orgMatch[1], 'orgs');
+    return;
+  }
+
+  // /users/some-username
+  const userMatch = path.match(/^\/users\/([^/]+)$/);
+  if (userMatch) {
+    await viewProfile(userMatch[1]);
+    return;
+  }
+
+  // Simple pages
+  const pageMap = {
+    '/':         'board',
+    '/orgs':     'orgs',
+    '/inbox':    'inbox',
+    '/settings': 'settings',
+    '/admin':    'admin',
+    '/about':    'about',
+  };
+
+  showPage(pageMap[path] || 'board', false);
+}
+
+window.addEventListener('popstate', router);
 
 function toggleMenu() {
   document.getElementById('nav-links').classList.toggle('open');
@@ -1056,6 +1102,7 @@ function switchOdTab(name, btn) {
 async function openOrgDetail(slug, fromPage) {
   currentOrgSlug = slug;
   currentOrgFromPage = fromPage;
+  window.history.pushState({ page: 'org-detail', slug }, '', `/orgs/${slug}`);
 
   try {
     const res = await fetch(`${API}/orgs/${slug}`, {
@@ -1224,7 +1271,7 @@ async function openOrgDetail(slug, fromPage) {
       </div>
     `;
 
-    showPage('org-detail');
+    showPage('org-detail', false);
 
     if (isOrgAdmin) {
       loadOrgMembers(org.id);
@@ -1753,7 +1800,7 @@ if (verified === 'true') {
 }
 
 
-  showPage('board');
+  await router();
 });
 
 
@@ -1829,6 +1876,7 @@ async function openProfileModal(username) {
 ══════════════════════════════════════ */
 
 async function viewProfile(username) {
+  window.history.pushState({ page: 'profile', username }, '', `/users/${username}`);
   try {
     const res = await fetch(`${API}/users/${username}`, {
       credentials: 'include'
@@ -1887,13 +1935,15 @@ async function viewProfile(username) {
       </div>
     `).join('') : '<p style="opacity:0.4">No thank you notes yet.</p>';
 
-    showPage('profile');
+    showPage('profile', false);
 
   } catch (err) {
     console.error('View profile error:', err);
     showToast('Could not load profile.');
   }
 }
+
+
 
 /* ══════════════════════════════════════
    INBOX
