@@ -179,6 +179,45 @@ function isMobile() {
   return window.innerWidth <= 680;
 }
 
+async function detectLocation(targetInputId) {
+  if (!navigator.geolocation) {
+    showToast("Location not supported by your browser.");
+    return;
+  }
+
+  showToast("Detecting location…");
+
+  navigator.geolocation.getCurrentPosition(
+    async (pos) => {
+      try {
+        const { latitude, longitude } = pos.coords;
+        const res = await fetch(
+          `https://nominatim.openstreetmap.org/reverse?lat=${latitude}&lon=${longitude}&format=json`,
+          { headers: { "Accept-Language": "en" } },
+        );
+        const data = await res.json();
+        const city =
+          data.address.city ||
+          data.address.town ||
+          data.address.village ||
+          data.address.suburb ||
+          data.address.county;
+        const state = data.address.state;
+        const location =
+          city && state ? `${city}, ${state}` : city || state || "";
+        const input = document.getElementById(targetInputId);
+        if (input) input.value = location;
+      } catch (err) {
+        showToast("Could not detect location.");
+        console.error("Reverse geocode error:", err);
+      }
+    },
+    () => {
+      showToast("Location permission denied.");
+    },
+  );
+}
+
 /* ── AUTH STATE ── */
 let loggedIn = false;
 let currentUser = null;
@@ -522,9 +561,10 @@ function buildSignUpModal(step) {
       <input type="text" class="form-input" id="su-displayname" placeholder="Can match your username" value="${signupData.username || ""}">
     </div>
     <div class="form-field">
-      <label class="form-label">General Location <span style="opacity:0.5;font-weight:400;text-transform:none;letter-spacing:0">(neighborhood or city — never exact address)</span></label>
-      <input type="text" class="form-input" id="su-location" placeholder="e.g. Northside, DC">
-    </div>
+  <label class="form-label">General Location <span style="opacity:0.5;font-weight:400;text-transform:none;letter-spacing:0">(neighborhood or city — never exact address)</span></label>
+  <input type="text" class="form-input" id="su-location" placeholder="e.g. Northside, DC">
+  <button type="button" class="location-detect-btn" onclick="detectLocation('su-location')">⊕ Use my location</button>
+</div>
     <div class="form-field">
       <label class="form-label">Short Bio <span style="opacity:0.5;font-weight:400;text-transform:none;letter-spacing:0">(optional but encouraged)</span></label>
       <textarea class="form-textarea" id="su-bio" placeholder="What do you bring to the community? What do you care about?" rows="3"></textarea>
@@ -716,6 +756,7 @@ function buildModal(type) {
         <div class="form-field">
           <label class="form-label">Your neighborhood or city</label>
           <input type="text" id="need-location" class="form-input" placeholder="${currentTab === "local" ? "e.g. Northside, DC" : "Remote"}">
+          <button type="button" class="location-detect-btn" onclick="detectLocation('need-location')">⊕ Use my location</button>
         </div>
       </div>
       <button class="form-submit" onclick="submitPost('need')">Post this Need →</button>
@@ -741,6 +782,7 @@ function buildModal(type) {
         <div class="form-field">
           <label class="form-label">Your neighborhood or city</label>
           <input type="text" id="offer-location" class="form-input" placeholder="${currentTab === "local" ? "e.g. East End, Richmond" : "Remote"}">
+          <button type="button" class="location-detect-btn" onclick="detectLocation('offer-location')">⊕ Use my location</button>
         </div>
       </div>
       <button class="form-submit" onclick="submitPost('offer')">Post this Ability →</button>
