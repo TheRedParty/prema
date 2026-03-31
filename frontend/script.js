@@ -207,6 +207,15 @@ async function detectLocation(targetInputId) {
           city && state ? `${city}, ${state}` : city || state || "";
         const input = document.getElementById(targetInputId);
         if (input) input.value = location;
+        if (
+          targetInputId === "need-location" ||
+          targetInputId === "offer-location"
+        ) {
+          pendingLatitude = latitude;
+          pendingLongitude = longitude;
+        }
+        userLatitude = latitude;
+        userLongitude = longitude;
       } catch (err) {
         showToast("Could not detect location.");
         console.error("Reverse geocode error:", err);
@@ -218,12 +227,30 @@ async function detectLocation(targetInputId) {
   );
 }
 
+function calculateDistance(lat1, lon1, lat2, lon2) {
+  const R = 3958.8; // Earth radius in miles
+  const dLat = ((lat2 - lat1) * Math.PI) / 180;
+  const dLon = ((lon2 - lon1) * Math.PI) / 180;
+  const a =
+    Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+    Math.cos((lat1 * Math.PI) / 180) *
+      Math.cos((lat2 * Math.PI) / 180) *
+      Math.sin(dLon / 2) *
+      Math.sin(dLon / 2);
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+  return (R * c).toFixed(1);
+}
+
 /* ── AUTH STATE ── */
 let loggedIn = false;
 let currentUser = null;
 let pendingAction = null;
 let currentOrgSlug = null;
 let currentOrgFromPage = null;
+let pendingLatitude = null;
+let pendingLongitude = null;
+let userLatitude = null;
+let userLongitude = null;
 
 function requireAuth(action) {
   if (loggedIn) {
@@ -898,6 +925,8 @@ async function submitPost(kind) {
         title,
         body,
         location,
+        latitude: pendingLatitude,
+        longitude: pendingLongitude,
       }),
     });
 
@@ -909,6 +938,8 @@ async function submitPost(kind) {
     }
 
     closeModal();
+    pendingLatitude = null;
+    pendingLongitude = null;
     showToast(
       isNeed
         ? "★ Your need has been posted."
@@ -1247,6 +1278,8 @@ async function fetchAndRenderCards() {
       name: p.display_name || p.username,
       loc: p.user_location || p.location || "Unknown",
       time: new Date(p.created_at).toLocaleDateString(),
+      latitude: p.latitude,
+      longitude: p.longitude,
     }));
 
     boardData[currentTab] = posts;
@@ -1294,7 +1327,16 @@ function renderCards() {
       <div class="card-title">${p.title}</div>
       <div class="card-body">${p.body}</div>
       <div class="card-footer">
-        <div class="card-meta"><span class="card-name" onclick="openProfileModal('${p.username}')">${p.name}</span></div>
+        <div class="card-meta">
+  <span class="card-name" onclick="openProfileModal('${p.username}')">${p.name}</span>
+  ${
+    userLatitude && userLongitude && p.latitude && p.longitude
+      ? `<span class="card-distance">${calculateDistance(userLatitude, userLongitude, p.latitude, p.longitude)} mi away</span>`
+      : p.loc
+        ? `<span class="card-distance">${p.loc}</span>`
+        : ""
+  }
+</div>
         <div class="card-actions">
           <button class="card-report-btn" onclick="openReport('post', ${p.id}, '${p.title}')" title="Report this post">⚑</button>
           <button class="card-cta" onclick="respondToPost(${p.user_id}, '${p.name}', '${p.title}')">Respond</button>

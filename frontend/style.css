@@ -820,7 +820,11 @@ nav {
   grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
   gap: 1rem;
 }
-
+.card-distance {
+  font-size: 0.6rem;
+  color: var(--gold);
+  letter-spacing: 0.05em;
+}
 .card {
   background: var(--ink);
   padding: 1.5rem;

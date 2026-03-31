@@ -64,7 +64,7 @@ router.get('/', async (req, res) => {
 
 // CREATE A POST
 router.post('/', requireAuth, async (req, res) => {
-  const { type, scope, category, title, body, location } = req.body;
+  const { type, scope, category, title, body, location, latitude, longitude } = req.body;
 
   if (!type || !scope || !category || !title || !body) {
     return res.status(400).json({ error: 'All fields are required' });
@@ -72,10 +72,10 @@ router.post('/', requireAuth, async (req, res) => {
 
   try {
     const result = await db.query(
-      `INSERT INTO posts (user_id, type, scope, category, title, body, location)
+      `INSERT INTO posts (user_id, type, scope, category, title, body, location, latitude, longitude)
        VALUES ($1, $2, $3, $4, $5, $6, $7)
        RETURNING *`,
-      [req.session.userId, type, scope, category, title, body, location]
+      [req.session.userId, type, scope, category, title, body, location, latitude || null, longitude || null]
     );
 
     res.status(201).json({ post: result.rows[0] });

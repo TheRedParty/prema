@@ -437,6 +437,8 @@ CREATE TABLE public.posts (
     is_removed boolean DEFAULT false,
     report_count integer DEFAULT 0,
     created_at timestamp without time zone DEFAULT now()
+    latitude numeric(10,7),
+    longitude numeric(10,7)
 );
 
 
