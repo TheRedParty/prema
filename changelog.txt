@@ -2,6 +2,21 @@ PREMA CHANGELOG
 prema.red · Mutual Aid Tool by The Red Party
 ═══════════════════════════════════════════════════════════════
 
+[2026-03-31] LOCATION — Auto-detect + Autocomplete
+────────────────────────────────────────────────────
+- Added detectLocation() using browser geolocation API + Nominatim reverse geocoding
+- "⊕ Use my location" button added to post need, post ability, signup step 2, settings
+- Added searchLocations() with 400ms debounce using Nominatim search API
+- Location autocomplete dropdown on all four location fields
+- Selecting from dropdown fills field and stores coordinates
+- Added pendingLatitude/pendingLongitude state vars for post submission
+- Added userLatitude/userLongitude state vars for distance calculation
+- Added calculateDistance() utility using Haversine formula (miles)
+- Cards now show distance in miles if both user and post have coordinates
+- Falls back to text location if coordinates unavailable
+- Added latitude and longitude columns to posts table (schema.sql updated)
+- Backend POST /api/posts now accepts and saves latitude and longitude
+
 [2026-03-14] SCHEMA — Missing Columns
 ───────────────────────────────────────
 - Added type VARCHAR(50) DEFAULT 'event' to events table

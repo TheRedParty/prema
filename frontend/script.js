@@ -241,6 +241,86 @@ function calculateDistance(lat1, lon1, lat2, lon2) {
   return (R * c).toFixed(1);
 }
 
+let locationSearchTimeout = null;
+
+async function searchLocations(query, targetInputId) {
+  if (query.length < 3) {
+    closeLocationDropdown();
+    return;
+  }
+
+  clearTimeout(locationSearchTimeout);
+  locationSearchTimeout = setTimeout(async () => {
+    try {
+      const res = await fetch(
+        `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(query)}&format=json&limit=5&addressdetails=1`,
+        { headers: { "Accept-Language": "en" } }
+      );
+      const results = await res.json();
+      showLocationDropdown(results, targetInputId);
+    } catch (err) {
+      console.error("Location search error:", err);
+    }
+  }, 400);
+}
+
+function showLocationDropdown(results, targetInputId) {
+  closeLocationDropdown();
+  if (!results.length) return;
+
+  const input = document.getElementById(targetInputId);
+  if (!input) return;
+
+  const dropdown = document.createElement("div");
+  dropdown.className = "location-dropdown";
+  dropdown.id = "location-dropdown";
+
+  results.forEach((r) => {
+    const city =
+      r.address.city ||
+      r.address.town ||
+      r.address.village ||
+      r.address.suburb ||
+      r.address.county;
+    const state = r.address.state;
+    const country = r.address.country;
+    const label = city && state
+      ? `${city}, ${state}`
+      : city && country
+      ? `${city}, ${country}`
+      : r.display_name.split(",").slice(0, 2).join(",");
+
+    const item = document.createElement("div");
+    item.className = "location-dropdown-item";
+    item.textContent = label;
+    item.onclick = () => {
+      input.value = label;
+      if (targetInputId === "need-location" || targetInputId === "offer-location") {
+        pendingLatitude = parseFloat(r.lat);
+        pendingLongitude = parseFloat(r.lon);
+      }
+      userLatitude = parseFloat(r.lat);
+      userLongitude = parseFloat(r.lon);
+      closeLocationDropdown();
+    };
+    dropdown.appendChild(item);
+  });
+
+  input.parentNode.style.position = "relative";
+  input.parentNode.appendChild(dropdown);
+}
+
+function closeLocationDropdown() {
+  const existing = document.getElementById("location-dropdown");
+  if (existing) existing.remove();
+}
+
+document.addEventListener("click", (e) => {
+  if (!e.target.closest(".location-dropdown") && !e.target.closest(".form-field")) {
+    closeLocationDropdown();
+  }
+});
+
 /* ── AUTH STATE ── */
 let loggedIn = false;
 let currentUser = null;
@@ -589,7 +669,7 @@ function buildSignUpModal(step) {
     </div>
     <div class="form-field">
   <label class="form-label">General Location <span style="opacity:0.5;font-weight:400;text-transform:none;letter-spacing:0">(neighborhood or city — never exact address)</span></label>
-  <input type="text" class="form-input" id="su-location" placeholder="e.g. Northside, DC">
+  <input type="text" class="form-input" id="su-location" placeholder="e.g. Northside, DC" oninput="searchLocations(this.value, 'su-location')">
   <button type="button" class="location-detect-btn" onclick="detectLocation('su-location')">⊕ Use my location</button>
 </div>
     <div class="form-field">
@@ -782,7 +862,7 @@ function buildModal(type) {
         </div>
         <div class="form-field">
           <label class="form-label">Your neighborhood or city</label>
-          <input type="text" id="need-location" class="form-input" placeholder="${currentTab === "local" ? "e.g. Northside, DC" : "Remote"}">
+          <input type="text" id="need-location" class="form-input" placeholder="${currentTab === 'local' ? 'e.g. Northside, DC' : 'Remote'}" oninput="searchLocations(this.value, 'need-location')">
           <button type="button" class="location-detect-btn" onclick="detectLocation('need-location')">⊕ Use my location</button>
         </div>
       </div>
@@ -808,7 +888,7 @@ function buildModal(type) {
         </div>
         <div class="form-field">
           <label class="form-label">Your neighborhood or city</label>
-          <input type="text" id="offer-location" class="form-input" placeholder="${currentTab === "local" ? "e.g. East End, Richmond" : "Remote"}">
+          <input type="text" id="offer-location" class="form-input" placeholder="${currentTab === 'local' ? 'e.g. East End, Richmond' : 'Remote'}" oninput="searchLocations(this.value, 'offer-location')">
           <button type="button" class="location-detect-btn" onclick="detectLocation('offer-location')">⊕ Use my location</button>
         </div>
       </div>

@@ -1396,6 +1396,35 @@ nav {
   letter-spacing: 0.03em;
 }
 .location-detect-btn:hover { color: var(--parchment); }
+.location-dropdown {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  background: #1C1810;
+  border: 1px solid rgba(237,224,196,0.15);
+  z-index: 500;
+  max-height: 200px;
+  overflow-y: auto;
+}
+
+.location-dropdown-item {
+  padding: 0.65rem 0.9rem;
+  font-size: 0.82rem;
+  color: rgba(237,224,196,0.8);
+  cursor: pointer;
+  border-bottom: 1px solid rgba(237,224,196,0.06);
+  transition: background 0.15s;
+}
+
+.location-dropdown-item:last-child {
+  border-bottom: none;
+}
+
+.location-dropdown-item:hover {
+  background: rgba(187,0,0,0.15);
+  color: var(--parchment);
+}
 
 /* ══════════════════════════════════════
    TOAST
