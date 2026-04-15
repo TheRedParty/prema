@@ -1206,7 +1206,6 @@ async function submitReport(contentType, contentId) {
 function initBoard() {
   if (boardReady) return;
   boardReady = true;
-  renderSidebar();
   renderFilters();
   fetchAndRenderCards();
 }
@@ -1230,42 +1229,10 @@ function switchTab(tab) {
   document.getElementById("sidebar-label").textContent =
     tab === "local" ? "Local Groups" : "Global Groups";
 
-  renderSidebar();
   renderFilters();
   fetchAndRenderCards();
 }
 
-async function renderSidebar() {
-  const el = document.getElementById("sidebar-orgs");
-  el.innerHTML = '<div class="so-loading">Loading…</div>';
-
-  try {
-    const res = await fetch(`${API}/orgs?scope=${currentTab}`, {
-      credentials: "include",
-    });
-    const data = await res.json();
-    const orgs = (data.orgs || []).slice(0, 5);
-
-    if (!orgs.length) {
-      el.innerHTML = '<div class="so-loading">No groups yet.</div>';
-      return;
-    }
-
-    el.innerHTML = orgs
-      .map(
-        (o) => `
-      <div class="sidebar-org" onclick="openOrgDetail('${o.slug}', 'board')">
-        <div class="so-name">🤝 ${o.name}</div>
-        <div class="so-desc">${o.description}</div>
-        <div class="so-meta">${o.member_count} members · ${o.location || "Remote"}</div>
-      </div>
-    `,
-      )
-      .join("");
-  } catch (err) {
-    el.innerHTML = '<div class="so-loading">Could not load groups.</div>';
-  }
-}
 
 function renderFilters() {
   const chips = filterSets[currentTab]
