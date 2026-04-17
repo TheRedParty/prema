@@ -13,7 +13,9 @@ const messageRoutes = require('./routes/messages');
 const userRoutes = require('./routes/users');
 const orgRoutes = require('./routes/orgs');
 const adminRoutes = require('./routes/admin');
-
+const path = require('path');
+const fs = require('fs');
+const uploadRoutes = require('./routes/uploads');
 
 // Middleware
 app.use(cors({
@@ -21,6 +23,11 @@ app.use(cors({
   credentials: true
 }));
 app.use(express.json());
+
+const uploadsDir = path.join(__dirname, '../uploads');
+if (!fs.existsSync(uploadsDir)) fs.mkdirSync(uploadsDir);
+app.use('/uploads', express.static(uploadsDir));
+
 app.use(session({
   secret: process.env.SESSION_SECRET,
   resave: false,
@@ -38,7 +45,7 @@ app.use('/api', messageRoutes);
 app.use('/api/users', userRoutes);
 app.use('/api/orgs', orgRoutes);
 app.use('/api/admin', adminRoutes);
-
+app.use('/api/upload', uploadRoutes);
 
 // Health check
 app.get('/api/health', (req, res) => {
