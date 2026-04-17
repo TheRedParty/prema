@@ -254,7 +254,7 @@ async function searchLocations(query, targetInputId) {
     try {
       const res = await fetch(
         `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(query)}&format=json&limit=5&addressdetails=1`,
-        { headers: { "Accept-Language": "en" } }
+        { headers: { "Accept-Language": "en" } },
       );
       const results = await res.json();
       showLocationDropdown(results, targetInputId);
@@ -284,18 +284,22 @@ function showLocationDropdown(results, targetInputId) {
       r.address.county;
     const state = r.address.state;
     const country = r.address.country;
-    const label = city && state
-      ? `${city}, ${state}`
-      : city && country
-      ? `${city}, ${country}`
-      : r.display_name.split(",").slice(0, 2).join(",");
+    const label =
+      city && state
+        ? `${city}, ${state}`
+        : city && country
+          ? `${city}, ${country}`
+          : r.display_name.split(",").slice(0, 2).join(",");
 
     const item = document.createElement("div");
     item.className = "location-dropdown-item";
     item.textContent = label;
     item.onclick = () => {
       input.value = label;
-      if (targetInputId === "need-location" || targetInputId === "offer-location") {
+      if (
+        targetInputId === "need-location" ||
+        targetInputId === "offer-location"
+      ) {
         pendingLatitude = parseFloat(r.lat);
         pendingLongitude = parseFloat(r.lon);
       }
@@ -316,7 +320,10 @@ function closeLocationDropdown() {
 }
 
 document.addEventListener("click", (e) => {
-  if (!e.target.closest(".location-dropdown") && !e.target.closest(".form-field")) {
+  if (
+    !e.target.closest(".location-dropdown") &&
+    !e.target.closest(".form-field")
+  ) {
     closeLocationDropdown();
   }
 });
@@ -410,6 +417,23 @@ function loadSettings() {
   document.getElementById("settings-location").value =
     currentUser.location || "";
   document.getElementById("settings-bio").value = currentUser.bio || "";
+
+  // Avatar preview
+  const preview = document.getElementById("settings-avatar-preview");
+  const initials = document.getElementById("settings-avatar-initials");
+  if (currentUser.avatar_url) {
+    preview.src = currentUser.avatar_url;
+    preview.style.display = "block";
+    initials.style.display = "none";
+  } else {
+    initials.textContent = (currentUser.name || "?")[0].toUpperCase();
+    initials.style.display = "flex";
+    preview.style.display = "none";
+  }
+
+  document
+    .getElementById("settings-avatar-input")
+    .addEventListener("change", uploadAvatar);
 }
 
 async function saveSettings() {
@@ -450,6 +474,36 @@ async function saveSettings() {
   } catch (err) {
     console.error("Save settings error:", err);
     showToast("Could not connect to server.");
+  }
+}
+
+async function uploadAvatar() {
+  const file = document.getElementById("settings-avatar-input").files[0];
+  if (!file) return;
+
+  const formData = new FormData();
+  formData.append("avatar", file);
+
+  try {
+    const res = await fetch(`${API}/upload/user`, {
+      method: "POST",
+      credentials: "include",
+      body: formData,
+    });
+
+    const data = await res.json();
+    if (!res.ok) { showToast(data.error || "Upload failed."); return; }
+
+    currentUser.avatar_url = data.avatar_url;
+    const preview = document.getElementById("settings-avatar-preview");
+    preview.src = data.avatar_url;
+    preview.style.display = "block";
+    document.getElementById("settings-avatar-initials").style.display = "none";
+    updateNavAuth();
+    showToast("✓ Photo updated.");
+  } catch (err) {
+    console.error("Avatar upload error:", err);
+    showToast("Could not upload photo.");
   }
 }
 
@@ -862,7 +916,7 @@ function buildModal(type) {
         </div>
         <div class="form-field">
           <label class="form-label">Your neighborhood or city</label>
-          <input type="text" id="need-location" class="form-input" placeholder="${currentTab === 'local' ? 'e.g. Northside, DC' : 'Remote'}" oninput="searchLocations(this.value, 'need-location')">
+          <input type="text" id="need-location" class="form-input" placeholder="${currentTab === "local" ? "e.g. Northside, DC" : "Remote"}" oninput="searchLocations(this.value, 'need-location')">
           <button type="button" class="location-detect-btn" onclick="detectLocation('need-location')">⊕ Use my location</button>
         </div>
       </div>
@@ -888,7 +942,7 @@ function buildModal(type) {
         </div>
         <div class="form-field">
           <label class="form-label">Your neighborhood or city</label>
-          <input type="text" id="offer-location" class="form-input" placeholder="${currentTab === 'local' ? 'e.g. East End, Richmond' : 'Remote'}" oninput="searchLocations(this.value, 'offer-location')">
+          <input type="text" id="offer-location" class="form-input" placeholder="${currentTab === "local" ? "e.g. East End, Richmond" : "Remote"}" oninput="searchLocations(this.value, 'offer-location')">
           <button type="button" class="location-detect-btn" onclick="detectLocation('offer-location')">⊕ Use my location</button>
         </div>
       </div>
@@ -1202,7 +1256,6 @@ async function submitReport(contentType, contentId) {
   }
 }
 
-
 function initBoard() {
   if (boardReady) return;
   boardReady = true;
@@ -1232,7 +1285,6 @@ function switchTab(tab) {
   renderFilters();
   fetchAndRenderCards();
 }
-
 
 function renderFilters() {
   const chips = filterSets[currentTab]
@@ -1339,7 +1391,7 @@ function renderCards() {
 </div>
         <div class="card-actions">
           <button class="card-report-btn" onclick="openReport('post', ${p.id}, '${p.title}')" title="Report this post">⚑</button>
-          ${currentUser && currentUser.id === p.user_id ? `<button class="card-delete-btn" onclick="deletePost(${p.id}, this)">Delete</button>` : ''}
+          ${currentUser && currentUser.id === p.user_id ? `<button class="card-delete-btn" onclick="deletePost(${p.id}, this)">Delete</button>` : ""}
           <button class="card-cta" onclick="respondToPost(${p.user_id}, '${p.name}', '${p.title}')">Respond</button>
         </div>
       </div>
@@ -1350,22 +1402,22 @@ function renderCards() {
 }
 
 async function deletePost(postId, btn) {
-  if (!confirm('Delete this post?')) return;
+  if (!confirm("Delete this post?")) return;
   try {
     const res = await fetch(`${API}/posts/${postId}`, {
-      method: 'DELETE',
-      credentials: 'include'
+      method: "DELETE",
+      credentials: "include",
     });
     if (res.ok) {
-      showToast('Post deleted.');
+      showToast("Post deleted.");
       fetchAndRenderCards();
     } else {
       const data = await res.json();
-      showToast(data.error || 'Could not delete post.');
+      showToast(data.error || "Could not delete post.");
     }
   } catch (err) {
-    console.error('Delete post error:', err);
-    showToast('Could not connect to server.');
+    console.error("Delete post error:", err);
+    showToast("Could not connect to server.");
   }
 }
 

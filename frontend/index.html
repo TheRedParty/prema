@@ -1,464 +1,695 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="description" content="Prema — post what you need. post what you can give. no middleman. just people.">
-  <title>Prema — Mutual Aid</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;0,700;1,300;1,400;1,600;1,700&family=Jost:wght@300;400;500;600&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="/style.css">
-</head>
-<body>
-
-<!-- ══════════════════════════════════════
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta
+      name="description"
+      content="Prema — post what you need. post what you can give. no middleman. just people."
+    />
+    <title>Prema — Mutual Aid</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;0,700;1,300;1,400;1,600;1,700&family=Jost:wght@300;400;500;600&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="/style.css" />
+  </head>
+  <body>
+    <!-- ══════════════════════════════════════
      NAVIGATION
 ══════════════════════════════════════ -->
-<nav id="nav">
-  <div class="nav-inner">
-    <div class="nav-logo" onclick="showPage('board')">
-      <span class="logo-word">Prema</span>
-      <span class="logo-dot">·</span>
-      <span class="logo-sub">red</span>
-    </div>
-    <div class="nav-links" id="nav-links">
-      <span class="nav-link active" data-page="board" onclick="showPage('board')">Board</span>
-      <span class="nav-link" data-page="orgs" onclick="showPage('orgs')">Organizations</span>
-      <span class="nav-link" data-page="about" onclick="showPage('about')">About</span>
-    </div>
-    <div class="nav-actions">
-      <div class="nav-profile-wrap" id="nav-profile-wrap">
-        <button class="nav-signin-btn" onclick="openModal('signin')">Sign In</button>
+    <nav id="nav">
+      <div class="nav-inner">
+        <div class="nav-logo" onclick="showPage('board')">
+          <span class="logo-word">Prema</span>
+          <span class="logo-dot">·</span>
+          <span class="logo-sub">red</span>
+        </div>
+        <div class="nav-links" id="nav-links">
+          <span
+            class="nav-link active"
+            data-page="board"
+            onclick="showPage('board')"
+            >Board</span
+          >
+          <span class="nav-link" data-page="orgs" onclick="showPage('orgs')"
+            >Organizations</span
+          >
+          <span class="nav-link" data-page="about" onclick="showPage('about')"
+            >About</span
+          >
+        </div>
+        <div class="nav-actions">
+          <div class="nav-profile-wrap" id="nav-profile-wrap">
+            <button class="nav-signin-btn" onclick="openModal('signin')">
+              Sign In
+            </button>
+          </div>
+          <button class="nav-menu-btn" id="nav-menu-btn" onclick="toggleMenu()">
+            ☰
+          </button>
+        </div>
       </div>
-      <button class="nav-menu-btn" id="nav-menu-btn" onclick="toggleMenu()">☰</button>
-    </div>
-  </div>
-</nav>
+    </nav>
 
-
-<!-- ══════════════════════════════════════
+    <!-- ══════════════════════════════════════
      BOARD PAGE
 ══════════════════════════════════════ -->
-<!-- HERO OVERLAY — sits above everything, dissolves on click -->
-<section class="hero">
-    <div class="hero-bg-word" aria-hidden="true">Love</div>
-    <div class="hero-inner">
-      <div class="hero-eyebrow">
-        <span class="hero-star">★</span>
-        <span>mutual aid</span>
-        <span class="hero-rule-sm"></span>
-        <span>prema.red</span>
-      </div>
-      <h1 class="hero-title">Prema</h1>
-      <p class="hero-tagline">Post what you need.<br>Post what you can give.<br>No middleman. <em>Just people.</em></p>
-      <div class="hero-divider"></div>
-      <p class="hero-sub">Prema is the Sanskrit word for unconditional love — the love between neighbors. The grocery run. The ride to the doctor. The hour of your time given to someone who needs it. It has always been more powerful than capital. This is where it lives.</p>
-    </div>
-    <div class="chain-btn-wrap" id="chain-btn-wrap">
-      <div class="chain-btn" id="chain-btn" onclick="discardChains()">
-        <div class="chain-side chain-left" id="chain-left"></div>
-        <div class="chain-text-wrap">
-          <span class="chain-btn-text">lose your chains</span>
+    <!-- HERO OVERLAY — sits above everything, dissolves on click -->
+    <section class="hero">
+      <div class="hero-bg-word" aria-hidden="true">Love</div>
+      <div class="hero-inner">
+        <div class="hero-eyebrow">
+          <span class="hero-star">★</span>
+          <span>mutual aid</span>
+          <span class="hero-rule-sm"></span>
+          <span>prema.red</span>
         </div>
-        <div class="chain-side chain-right" id="chain-right"></div>
+        <h1 class="hero-title">Prema</h1>
+        <p class="hero-tagline">
+          Post what you need.<br />Post what you can give.<br />No middleman.
+          <em>Just people.</em>
+        </p>
+        <div class="hero-divider"></div>
+        <p class="hero-sub">
+          Prema is the Sanskrit word for unconditional love — the love between
+          neighbors. The grocery run. The ride to the doctor. The hour of your
+          time given to someone who needs it. It has always been more powerful
+          than capital. This is where it lives.
+        </p>
       </div>
-      <div class="chain-fragments" id="chain-fragments" aria-hidden="true"></div>
-    </div>
-  </section>
-
-<!-- BOARD PAGE — visible behind hero from the start -->
-<div class="page active" id="page-board">
-  <section class="board-section">
-
-    <!-- TOPBAR -->
-    <div class="board-topbar" id="board-topbar">
-      <div class="board-tabs">
-        <button class="board-tab active" data-tab="local" onclick="switchTab('local')">
-          <span class="tab-ico">📍</span> Local
-        </button>
-        <button class="board-tab" data-tab="global" onclick="switchTab('global')">
-          <span class="tab-ico">🌐</span> Global
-        </button>
+      <div class="chain-btn-wrap" id="chain-btn-wrap">
+        <div class="chain-btn" id="chain-btn" onclick="discardChains()">
+          <div class="chain-side chain-left" id="chain-left"></div>
+          <div class="chain-text-wrap">
+            <span class="chain-btn-text">lose your chains</span>
+          </div>
+          <div class="chain-side chain-right" id="chain-right"></div>
+        </div>
+        <div
+          class="chain-fragments"
+          id="chain-fragments"
+          aria-hidden="true"
+        ></div>
       </div>
-      <div class="topbar-search-wrap">
-        <span class="search-ico">⌕</span>
-        <input type="text" id="board-search" class="topbar-search" placeholder="Search…" oninput="fetchAndRenderCards()">
-      </div>
-      <select id="board-sort" class="topbar-sort" onchange="fetchAndRenderCards()">
-        <option value="all">All Posts</option>
-        <option value="offers">Abilities Only</option>
-        <option value="needs">Needs Only</option>
-      </select>
-      <div class="topbar-post-btns">
-        <button class="topbar-btn-need"  onclick="openModal('post-need')">+ Need</button>
-        <button class="topbar-btn-offer" onclick="openModal('post-offer')">+ Ability</button>
-      </div>
-    </div>
+    </section>
 
-    <div class="board-body">
-
-      <!-- MAIN -->
-      <div class="board-main">
-        <div class="board-panel-hd">
-          <div class="panel-hd-left">
-            <h2 id="panel-title" class="panel-title">Local <em>Abilities &amp; Needs</em></h2>
-            <p id="panel-sub" class="panel-sub">In-person help in your community.</p>
+    <!-- BOARD PAGE — visible behind hero from the start -->
+    <div class="page active" id="page-board">
+      <section class="board-section">
+        <!-- TOPBAR -->
+        <div class="board-topbar" id="board-topbar">
+          <div class="board-tabs">
+            <button
+              class="board-tab active"
+              data-tab="local"
+              onclick="switchTab('local')"
+            >
+              <span class="tab-ico">📍</span> Local
+            </button>
+            <button
+              class="board-tab"
+              data-tab="global"
+              onclick="switchTab('global')"
+            >
+              <span class="tab-ico">🌐</span> Global
+            </button>
+          </div>
+          <div class="topbar-search-wrap">
+            <span class="search-ico">⌕</span>
+            <input
+              type="text"
+              id="board-search"
+              class="topbar-search"
+              placeholder="Search…"
+              oninput="fetchAndRenderCards()"
+            />
+          </div>
+          <select
+            id="board-sort"
+            class="topbar-sort"
+            onchange="fetchAndRenderCards()"
+          >
+            <option value="all">All Posts</option>
+            <option value="offers">Abilities Only</option>
+            <option value="needs">Needs Only</option>
+          </select>
+          <div class="topbar-post-btns">
+            <button class="topbar-btn-need" onclick="openModal('post-need')">
+              + Need
+            </button>
+            <button class="topbar-btn-offer" onclick="openModal('post-offer')">
+              + Ability
+            </button>
           </div>
         </div>
-        <div class="board-filters" id="board-filters"></div>
-        <div class="cards-grid" id="cards-grid"></div>
-      </div>
 
+        <div class="board-body">
+          <!-- MAIN -->
+          <div class="board-main">
+            <div class="board-panel-hd">
+              <div class="panel-hd-left">
+                <h2 id="panel-title" class="panel-title">
+                  Local <em>Abilities &amp; Needs</em>
+                </h2>
+                <p id="panel-sub" class="panel-sub">
+                  In-person help in your community.
+                </p>
+              </div>
+            </div>
+            <div class="board-filters" id="board-filters"></div>
+            <div class="cards-grid" id="cards-grid"></div>
+          </div>
+        </div>
+      </section>
+
+      <footer class="site-footer">
+        <div class="footer-inner">
+          <div class="footer-logo">Prema</div>
+          <div class="footer-mid">
+            <span>Unconditional love in action.</span>
+          </div>
+          <div class="footer-party">
+            Brought to you by
+            <a href="https://theparty.red" target="_blank">The Red Party</a>
+          </div>
+        </div>
+      </footer>
     </div>
-  </section>
+    <!-- /page-board -->
 
-  <footer class="site-footer">
-    <div class="footer-inner">
-      <div class="footer-logo">Prema</div>
-      <div class="footer-mid">
-        <span>Unconditional love in action.</span>
-      </div>
-      <div class="footer-party">
-        Brought to you by <a href="https://theparty.red" target="_blank">The Red Party</a>
-      </div>
-    </div>
-  </footer>
-
-</div><!-- /page-board -->
-
-
-<!-- ══════════════════════════════════════
+    <!-- ══════════════════════════════════════
      ORGANIZATIONS PAGE
 ══════════════════════════════════════ -->
-<div class="page" id="page-orgs">
-
-  <div class="page-hero-sm">
-    <div class="page-hero-inner">
-      <div class="page-hero-eyebrow">★ Organizations</div>
-      <h1 class="page-hero-title">Groups doing <em>the work.</em></h1>
-      <p class="page-hero-sub">The working class has always organized. Here are the groups you can join, support, or organize with.</p>
-    </div>
-  </div>
-
-  <div class="orgs-shell">
-    <div class="orgs-topbar">
-      <div class="board-tabs">
-        <button class="board-tab active" data-orgtab="local" onclick="switchOrgsTab('local')">📍 Local</button>
-        <button class="board-tab" data-orgtab="global" onclick="switchOrgsTab('global')">🌐 Global</button>
+    <div class="page" id="page-orgs">
+      <div class="page-hero-sm">
+        <div class="page-hero-inner">
+          <div class="page-hero-eyebrow">★ Organizations</div>
+          <h1 class="page-hero-title">Groups doing <em>the work.</em></h1>
+          <p class="page-hero-sub">
+            The working class has always organized. Here are the groups you can
+            join, support, or organize with.
+          </p>
+        </div>
       </div>
-      <div class="topbar-search-wrap">
-        <span class="search-ico">⌕</span>
-        <input type="text" id="orgs-search" class="topbar-search" placeholder="Search organizations…" oninput="fetchAndRenderOrgs()">
+
+      <div class="orgs-shell">
+        <div class="orgs-topbar">
+          <div class="board-tabs">
+            <button
+              class="board-tab active"
+              data-orgtab="local"
+              onclick="switchOrgsTab('local')"
+            >
+              📍 Local
+            </button>
+            <button
+              class="board-tab"
+              data-orgtab="global"
+              onclick="switchOrgsTab('global')"
+            >
+              🌐 Global
+            </button>
+          </div>
+          <div class="topbar-search-wrap">
+            <span class="search-ico">⌕</span>
+            <input
+              type="text"
+              id="orgs-search"
+              class="topbar-search"
+              placeholder="Search organizations…"
+              oninput="fetchAndRenderOrgs()"
+            />
+          </div>
+          <button class="topbar-btn-offer" onclick="openModal('add-org')">
+            + Add Organization
+          </button>
+        </div>
+        <div class="orgs-grid" id="orgs-grid"></div>
       </div>
-      <button class="topbar-btn-offer" onclick="openModal('add-org')">+ Add Organization</button>
+
+      <footer class="site-footer">
+        <div class="footer-inner">
+          <div class="footer-logo">Prema</div>
+          <div class="footer-mid">
+            <span>Unconditional love in action.</span>
+          </div>
+          <div class="footer-party">
+            Brought to you by
+            <a href="https://theparty.red" target="_blank">The Red Party</a>
+          </div>
+        </div>
+      </footer>
     </div>
-    <div class="orgs-grid" id="orgs-grid"></div>
-  </div>
+    <!-- /page-orgs -->
 
-  <footer class="site-footer">
-    <div class="footer-inner">
-      <div class="footer-logo">Prema</div>
-      <div class="footer-mid"><span>Unconditional love in action.</span></div>
-      <div class="footer-party">Brought to you by <a href="https://theparty.red" target="_blank">The Red Party</a></div>
-    </div>
-  </footer>
-
-</div><!-- /page-orgs -->
-
-
-<!-- ══════════════════════════════════════
+    <!-- ══════════════════════════════════════
      ORG DETAIL (dynamic)
 ══════════════════════════════════════ -->
-<div class="page" id="page-org-detail"></div>
+    <div class="page" id="page-org-detail"></div>
 
-<!-- ══════════════════════════════════════
+    <!-- ══════════════════════════════════════
      ADMIN DASHBOARD
 ══════════════════════════════════════ -->
-<div class="page" id="page-admin">
-
-  <div class="page-hero-sm">
-    <div class="page-hero-inner">
-      <div class="page-hero-eyebrow">★ Admin</div>
-      <h1 class="page-hero-title">Moderation <em>Dashboard</em></h1>
-    </div>
-  </div>
-
-  <div class="admin-shell">
-
-    <div class="admin-tabs">
-      <button class="admin-tab active" onclick="switchAdminTab('reports', this)">
-        Reports <span class="admin-tab-badge" id="admin-reports-badge"></span>
-      </button>
-      <button class="admin-tab" onclick="switchAdminTab('users', this)">Users</button>
-      <button class="admin-tab" onclick="switchAdminTab('orgs', this)">Org Requests <span class="admin-tab-badge" id="admin-orgs-badge"></span></button>
-    </div>
-
-    <div class="admin-panel" id="admin-panel-reports">
-      <div id="admin-reports-list"></div>
-    </div>
-
-    <div class="admin-panel admin-panel-hidden" id="admin-panel-users">
-      <div class="admin-search-wrap">
-        <input type="text" id="admin-user-search" class="form-input" placeholder="Search users by name, username, or email…" oninput="searchAdminUsers()">
+    <div class="page" id="page-admin">
+      <div class="page-hero-sm">
+        <div class="page-hero-inner">
+          <div class="page-hero-eyebrow">★ Admin</div>
+          <h1 class="page-hero-title">Moderation <em>Dashboard</em></h1>
+        </div>
       </div>
-      <div id="admin-users-list"></div>
+
+      <div class="admin-shell">
+        <div class="admin-tabs">
+          <button
+            class="admin-tab active"
+            onclick="switchAdminTab('reports', this)"
+          >
+            Reports
+            <span class="admin-tab-badge" id="admin-reports-badge"></span>
+          </button>
+          <button class="admin-tab" onclick="switchAdminTab('users', this)">
+            Users
+          </button>
+          <button class="admin-tab" onclick="switchAdminTab('orgs', this)">
+            Org Requests
+            <span class="admin-tab-badge" id="admin-orgs-badge"></span>
+          </button>
+        </div>
+
+        <div class="admin-panel" id="admin-panel-reports">
+          <div id="admin-reports-list"></div>
+        </div>
+
+        <div class="admin-panel admin-panel-hidden" id="admin-panel-users">
+          <div class="admin-search-wrap">
+            <input
+              type="text"
+              id="admin-user-search"
+              class="form-input"
+              placeholder="Search users by name, username, or email…"
+              oninput="searchAdminUsers()"
+            />
+          </div>
+          <div id="admin-users-list"></div>
+        </div>
+
+        <div class="admin-panel admin-panel-hidden" id="admin-panel-orgs">
+          <div id="admin-orgs-list"></div>
+        </div>
+      </div>
+
+      <footer class="site-footer">
+        <div class="footer-inner">
+          <div class="footer-logo">Prema</div>
+          <div class="footer-mid">
+            <span>Unconditional love in action.</span>
+          </div>
+          <div class="footer-party">
+            Brought to you by
+            <a href="https://theparty.red" target="_blank">The Red Party</a>
+          </div>
+        </div>
+      </footer>
     </div>
+    <!-- /page-admin -->
 
-    <div class="admin-panel admin-panel-hidden" id="admin-panel-orgs">
-      <div id="admin-orgs-list"></div>
-    </div>
-
-  </div>
-
-  <footer class="site-footer">
-    <div class="footer-inner">
-      <div class="footer-logo">Prema</div>
-      <div class="footer-mid"><span>Unconditional love in action.</span></div>
-      <div class="footer-party">Brought to you by <a href="https://theparty.red" target="_blank">The Red Party</a></div>
-    </div>
-  </footer>
-
-</div><!-- /page-admin -->
-
-
-<!-- ══════════════════════════════════════
+    <!-- ══════════════════════════════════════
      SETTINGS
 ══════════════════════════════════════ -->
-<div class="page" id="page-settings">
-
-  <div class="page-hero-sm">
-    <div class="page-hero-inner">
-      <div class="page-hero-eyebrow">★ Account</div>
-      <h1 class="page-hero-title">Your <em>Settings</em></h1>
-    </div>
-  </div>
-
-  <div class="settings-body">
-    <div class="settings-section">
-      <div class="settings-section-title">Profile</div>
-      <div class="form-field">
-        <label class="form-label">Display Name</label>
-        <input type="text" class="form-input" id="settings-displayname" placeholder="Your name">
+    <div class="page" id="page-settings">
+      <div class="settings-avatar">
+        <img
+          id="settings-avatar-preview"
+          src=""
+          alt="Profile picture"
+          style="display: none"
+        />
+        <div id="settings-avatar-initials" class="avatar-initials-large"></div>
+        <label for="settings-avatar-input" class="btn-secondary"
+          >Change Photo</label
+        >
+        <input
+          type="file"
+          id="settings-avatar-input"
+          accept="image/*"
+          style="display: none"
+        />
       </div>
-      <div class="form-field">
-        <label class="form-label">Location <span style="opacity:0.5;font-weight:400;text-transform:none;letter-spacing:0">(neighborhood or city)</span></label>
-        <input type="text" class="form-input" id="settings-location" placeholder="e.g. Northside, DC" oninput="searchLocations(this.value, 'settings-location')">
-        <button type="button" class="location-detect-btn" onclick="detectLocation('settings-location')">⊕ Use my location</button>
+
+      <div class="page-hero-sm">
+        <div class="page-hero-inner">
+          <div class="page-hero-eyebrow">★ Account</div>
+          <h1 class="page-hero-title">Your <em>Settings</em></h1>
+        </div>
       </div>
-      <div class="form-field">
-        <label class="form-label">Bio</label>
-        <textarea class="form-textarea" id="settings-bio" rows="4" placeholder="Tell the community about yourself."></textarea>
+
+      <div class="settings-body">
+        <div class="settings-section">
+          <div class="settings-section-title">Profile</div>
+          <div class="form-field">
+            <label class="form-label">Display Name</label>
+            <input
+              type="text"
+              class="form-input"
+              id="settings-displayname"
+              placeholder="Your name"
+            />
+          </div>
+          <div class="form-field">
+            <label class="form-label"
+              >Location
+              <span
+                style="
+                  opacity: 0.5;
+                  font-weight: 400;
+                  text-transform: none;
+                  letter-spacing: 0;
+                "
+                >(neighborhood or city)</span
+              ></label
+            >
+            <input
+              type="text"
+              class="form-input"
+              id="settings-location"
+              placeholder="e.g. Northside, DC"
+              oninput="searchLocations(this.value, 'settings-location')"
+            />
+            <button
+              type="button"
+              class="location-detect-btn"
+              onclick="detectLocation('settings-location')"
+            >
+              ⊕ Use my location
+            </button>
+          </div>
+          <div class="form-field">
+            <label class="form-label">Bio</label>
+            <textarea
+              class="form-textarea"
+              id="settings-bio"
+              rows="4"
+              placeholder="Tell the community about yourself."
+            ></textarea>
+          </div>
+          <button class="form-submit" onclick="saveSettings()">
+            Save Changes →
+          </button>
+        </div>
       </div>
-      <button class="form-submit" onclick="saveSettings()">Save Changes →</button>
+
+      <footer class="site-footer">
+        <div class="footer-inner">
+          <div class="footer-logo">Prema</div>
+          <div class="footer-mid">
+            <span>Unconditional love in action.</span>
+          </div>
+          <div class="footer-party">
+            Brought to you by
+            <a href="https://theparty.red" target="_blank">The Red Party</a>
+          </div>
+        </div>
+      </footer>
     </div>
-  </div>
+    <!-- /page-settings -->
 
-  <footer class="site-footer">
-    <div class="footer-inner">
-      <div class="footer-logo">Prema</div>
-      <div class="footer-mid"><span>Unconditional love in action.</span></div>
-      <div class="footer-party">Brought to you by <a href="https://theparty.red" target="_blank">The Red Party</a></div>
-    </div>
-  </footer>
-
-</div><!-- /page-settings -->
-
-
-
-<!-- ══════════════════════════════════════
+    <!-- ══════════════════════════════════════
      ABOUT PAGE
 ══════════════════════════════════════ -->
-<div class="page" id="page-about">
-
-  <div class="page-hero-sm">
-    <div class="page-hero-inner">
-      <div class="page-hero-eyebrow">★ About Prema</div>
-      <h1 class="page-hero-title">What is <em>Prema?</em></h1>
-    </div>
-  </div>
-
-  <div class="about-body">
-
-    <div class="about-section about-lede">
-      <p class="about-lede-text">Prema is the Sanskrit word for unconditional love — the love between people who take care of each other. Not romantic love. Not grand political love. The love of someone making you food because you're too exhausted to cook. The love of a ride to the doctor. The love of an hour of your time given freely to a neighbor you barely know but would never let go without help.</p>
-      <p class="about-lede-text">That love has always existed. It has always been more powerful than capital. This tool exists to give it a place to live.</p>
-    </div>
-
-    <div class="about-grid">
-      <div class="about-block">
-        <div class="about-block-num">01</div>
-        <h3 class="about-block-title">Post a Need</h3>
-        <p class="about-block-body">Tell the community what you need — food, a ride, a skill, a conversation. No judgment. No means test. You need it and someone here might have it.</p>
-      </div>
-      <div class="about-block">
-        <div class="about-block-num">02</div>
-        <h3 class="about-block-title">Post an Ability</h3>
-        <p class="about-block-body">Tell the community what you can give — time, skill, labor, care. What you're actually good at, offered directly to the people who need it with no one taking a cut.</p>
-      </div>
-      <div class="about-block">
-        <div class="about-block-num">03</div>
-        <h3 class="about-block-title">Respond</h3>
-        <p class="about-block-body">See a need you can meet? A skill you need? Reach out directly. No algorithm deciding who sees what. No profit motive in the middle of every human exchange.</p>
-      </div>
-      <div class="about-block">
-        <div class="about-block-num">04</div>
-        <h3 class="about-block-title">Find Your People</h3>
-        <p class="about-block-body">Organizations — unions, mutual aid groups, community orgs — can list themselves here. Find groups doing the work near you, or online globally.</p>
-      </div>
-    </div>
-
-    <div class="about-section about-rules">
-      <h2 class="about-section-title">How it works</h2>
-      <div class="rules-list">
-        <div class="rule-item">
-          <span class="rule-star">★</span>
-          <p>Free to use. Always. Browse without an account. You'll need to create a free account to post or respond — just a name and email, nothing else.</p>
-        </div>
-        <div class="rule-item">
-          <span class="rule-star">★</span>
-          <p>Local posts are for in-person help in your area. Global posts are for remote help — skills, advice, code, writing, anything you can give from anywhere.</p>
-        </div>
-        <div class="rule-item">
-          <span class="rule-star">★</span>
-          <p>No one profits from this. No ads. No data sold. No investor class sitting in the middle of your community taking their cut.</p>
-        </div>
-        <div class="rule-item">
-          <span class="rule-star">★</span>
-          <p>Organizations can add themselves to the directory and use Prema to connect with volunteers and people who need their services.</p>
+    <div class="page" id="page-about">
+      <div class="page-hero-sm">
+        <div class="page-hero-inner">
+          <div class="page-hero-eyebrow">★ About Prema</div>
+          <h1 class="page-hero-title">What is <em>Prema?</em></h1>
         </div>
       </div>
-    </div>
 
-    <div class="about-section about-party">
-      <div class="about-party-inner">
-        <div class="about-party-label">★ The Red Party</div>
-        <h2 class="about-party-title">Who built this and why.</h2>
-        <p class="about-party-body">Prema is built and maintained by <a href="https://theparty.red" target="_blank">The Red Party</a> — a political party founded on the belief that love is more powerful than capital. The tool exists to prove that point. Every need met, every ability given, every connection made on Prema is evidence that people taking care of each other works — and works better than any profit motive ever could.</p>
-        <p class="about-party-body">You don't need to be a member of The Red Party to use Prema. You don't need to agree with anything politically. You just need to believe that the person asking for help deserves it.</p>
-        <a href="https://theparty.red" target="_blank" class="about-party-link">Learn about The Red Party →</a>
+      <div class="about-body">
+        <div class="about-section about-lede">
+          <p class="about-lede-text">
+            Prema is the Sanskrit word for unconditional love — the love between
+            people who take care of each other. Not romantic love. Not grand
+            political love. The love of someone making you food because you're
+            too exhausted to cook. The love of a ride to the doctor. The love of
+            an hour of your time given freely to a neighbor you barely know but
+            would never let go without help.
+          </p>
+          <p class="about-lede-text">
+            That love has always existed. It has always been more powerful than
+            capital. This tool exists to give it a place to live.
+          </p>
+        </div>
+
+        <div class="about-grid">
+          <div class="about-block">
+            <div class="about-block-num">01</div>
+            <h3 class="about-block-title">Post a Need</h3>
+            <p class="about-block-body">
+              Tell the community what you need — food, a ride, a skill, a
+              conversation. No judgment. No means test. You need it and someone
+              here might have it.
+            </p>
+          </div>
+          <div class="about-block">
+            <div class="about-block-num">02</div>
+            <h3 class="about-block-title">Post an Ability</h3>
+            <p class="about-block-body">
+              Tell the community what you can give — time, skill, labor, care.
+              What you're actually good at, offered directly to the people who
+              need it with no one taking a cut.
+            </p>
+          </div>
+          <div class="about-block">
+            <div class="about-block-num">03</div>
+            <h3 class="about-block-title">Respond</h3>
+            <p class="about-block-body">
+              See a need you can meet? A skill you need? Reach out directly. No
+              algorithm deciding who sees what. No profit motive in the middle
+              of every human exchange.
+            </p>
+          </div>
+          <div class="about-block">
+            <div class="about-block-num">04</div>
+            <h3 class="about-block-title">Find Your People</h3>
+            <p class="about-block-body">
+              Organizations — unions, mutual aid groups, community orgs — can
+              list themselves here. Find groups doing the work near you, or
+              online globally.
+            </p>
+          </div>
+        </div>
+
+        <div class="about-section about-rules">
+          <h2 class="about-section-title">How it works</h2>
+          <div class="rules-list">
+            <div class="rule-item">
+              <span class="rule-star">★</span>
+              <p>
+                Free to use. Always. Browse without an account. You'll need to
+                create a free account to post or respond — just a name and
+                email, nothing else.
+              </p>
+            </div>
+            <div class="rule-item">
+              <span class="rule-star">★</span>
+              <p>
+                Local posts are for in-person help in your area. Global posts
+                are for remote help — skills, advice, code, writing, anything
+                you can give from anywhere.
+              </p>
+            </div>
+            <div class="rule-item">
+              <span class="rule-star">★</span>
+              <p>
+                No one profits from this. No ads. No data sold. No investor
+                class sitting in the middle of your community taking their cut.
+              </p>
+            </div>
+            <div class="rule-item">
+              <span class="rule-star">★</span>
+              <p>
+                Organizations can add themselves to the directory and use Prema
+                to connect with volunteers and people who need their services.
+              </p>
+            </div>
+          </div>
+        </div>
+
+        <div class="about-section about-party">
+          <div class="about-party-inner">
+            <div class="about-party-label">★ The Red Party</div>
+            <h2 class="about-party-title">Who built this and why.</h2>
+            <p class="about-party-body">
+              Prema is built and maintained by
+              <a href="https://theparty.red" target="_blank">The Red Party</a> —
+              a political party founded on the belief that love is more powerful
+              than capital. The tool exists to prove that point. Every need met,
+              every ability given, every connection made on Prema is evidence
+              that people taking care of each other works — and works better
+              than any profit motive ever could.
+            </p>
+            <p class="about-party-body">
+              You don't need to be a member of The Red Party to use Prema. You
+              don't need to agree with anything politically. You just need to
+              believe that the person asking for help deserves it.
+            </p>
+            <a
+              href="https://theparty.red"
+              target="_blank"
+              class="about-party-link"
+              >Learn about The Red Party →</a
+            >
+          </div>
+        </div>
       </div>
+
+      <footer class="site-footer">
+        <div class="footer-inner">
+          <div class="footer-logo">Prema</div>
+          <div class="footer-mid">
+            <span>Unconditional love in action.</span>
+          </div>
+          <div class="footer-party">
+            Brought to you by
+            <a href="https://theparty.red" target="_blank">The Red Party</a>
+          </div>
+        </div>
+      </footer>
     </div>
+    <!-- /page-about -->
 
-  </div>
-
-  <footer class="site-footer">
-    <div class="footer-inner">
-      <div class="footer-logo">Prema</div>
-      <div class="footer-mid"><span>Unconditional love in action.</span></div>
-      <div class="footer-party">Brought to you by <a href="https://theparty.red" target="_blank">The Red Party</a></div>
-    </div>
-  </footer>
-
-</div><!-- /page-about -->
-
-
-
-<!-- ══════════════════════════════════════
+    <!-- ══════════════════════════════════════
      PROFILE PAGE
 ══════════════════════════════════════ -->
-<div class="page" id="page-profile">
-
-  <div class="profile-hero">
-    <div class="profile-hero-inner">
-      <div class="profile-avatar-lg" id="profile-avatar">?</div>
-      <div class="profile-hero-info">
-        <h1 class="profile-display-name" id="profile-display-name"></h1>
-        <div class="profile-meta-row">
-          <span class="profile-meta-item" id="profile-location"></span>
-          <span class="profile-meta-dot">·</span>
-          <span class="profile-meta-item" id="profile-member-since"></span>
-        </div>
-        <p class="profile-bio" id="profile-bio"></p>
-        <div class="profile-stats">
-          <div class="profile-stat">
-            <span class="profile-stat-num" id="profile-helps">0</span>
-            <span class="profile-stat-label">Helps given</span>
+    <div class="page" id="page-profile">
+      <div class="profile-hero">
+        <div class="profile-hero-inner">
+          <div class="profile-avatar-lg" id="profile-avatar">?</div>
+          <div class="profile-hero-info">
+            <h1 class="profile-display-name" id="profile-display-name"></h1>
+            <div class="profile-meta-row">
+              <span class="profile-meta-item" id="profile-location"></span>
+              <span class="profile-meta-dot">·</span>
+              <span class="profile-meta-item" id="profile-member-since"></span>
+            </div>
+            <p class="profile-bio" id="profile-bio"></p>
+            <div class="profile-stats">
+              <div class="profile-stat">
+                <span class="profile-stat-num" id="profile-helps">0</span>
+                <span class="profile-stat-label">Helps given</span>
+              </div>
+              <div class="profile-stat">
+                <span class="profile-stat-num" id="profile-vouches-count"
+                  >0</span
+                >
+                <span class="profile-stat-label">Vouches</span>
+              </div>
+            </div>
+            <button class="profile-report-btn" id="profile-report-btn">
+              ⚑ Report this profile
+            </button>
           </div>
-          <div class="profile-stat">
-            <span class="profile-stat-num" id="profile-vouches-count">0</span>
-            <span class="profile-stat-label">Vouches</span>
+        </div>
+      </div>
+
+      <div class="profile-body">
+        <div class="profile-col-main">
+          <div class="profile-section">
+            <h2 class="profile-section-title">Active Posts</h2>
+            <div class="profile-posts-list" id="profile-posts-list"></div>
+          </div>
+          <div class="profile-section">
+            <h2 class="profile-section-title">
+              Vouches
+              <span class="profile-section-count" id="profile-vouches-label"
+                >0</span
+              >
+            </h2>
+            <div class="profile-vouches-list" id="profile-vouches-list"></div>
           </div>
         </div>
-        <button class="profile-report-btn" id="profile-report-btn">⚑ Report this profile</button>
+
+        <div class="profile-col-side">
+          <div class="profile-section">
+            <h2 class="profile-section-title">Thank You Notes</h2>
+            <div class="profile-thanks-list" id="profile-thanks-list"></div>
+          </div>
+        </div>
       </div>
+
+      <footer class="site-footer">
+        <div class="footer-inner">
+          <div class="footer-logo">Prema</div>
+          <div class="footer-mid">
+            <span>Unconditional love in action.</span>
+          </div>
+          <div class="footer-party">
+            Brought to you by
+            <a href="https://theparty.red" target="_blank">The Red Party</a>
+          </div>
+        </div>
+      </footer>
     </div>
-  </div>
+    <!-- /page-profile -->
 
-  <div class="profile-body">
-    <div class="profile-col-main">
-      <div class="profile-section">
-        <h2 class="profile-section-title">Active Posts</h2>
-        <div class="profile-posts-list" id="profile-posts-list"></div>
-      </div>
-      <div class="profile-section">
-        <h2 class="profile-section-title">Vouches <span class="profile-section-count" id="profile-vouches-label">0</span></h2>
-        <div class="profile-vouches-list" id="profile-vouches-list"></div>
-      </div>
-    </div>
-
-    <div class="profile-col-side">
-      <div class="profile-section">
-        <h2 class="profile-section-title">Thank You Notes</h2>
-        <div class="profile-thanks-list" id="profile-thanks-list"></div>
-      </div>
-    </div>
-  </div>
-
-  <footer class="site-footer">
-    <div class="footer-inner">
-      <div class="footer-logo">Prema</div>
-      <div class="footer-mid"><span>Unconditional love in action.</span></div>
-      <div class="footer-party">Brought to you by <a href="https://theparty.red" target="_blank">The Red Party</a></div>
-    </div>
-  </footer>
-
-</div><!-- /page-profile -->
-
-<!-- ══════════════════════════════════════
+    <!-- ══════════════════════════════════════
      INBOX PAGE
 ══════════════════════════════════════ -->
-<div class="page" id="page-inbox">
+    <div class="page" id="page-inbox">
+      <div class="inbox-shell">
+        <div class="inbox-sidebar">
+          <div class="inbox-sidebar-hd">Messages</div>
+          <div class="inbox-thread-list" id="inbox-thread-list"></div>
+        </div>
 
-  <div class="inbox-shell">
-    <div class="inbox-sidebar">
-      <div class="inbox-sidebar-hd">Messages</div>
-      <div class="inbox-thread-list" id="inbox-thread-list"></div>
-    </div>
-
-    <div class="inbox-main" id="inbox-main">
-      <div class="inbox-thread-hd" id="inbox-thread-hd"></div>
-      <div class="inbox-messages" id="inbox-messages"></div>
-      <div class="inbox-compose" id="inbox-compose" style="display:none">
-        <textarea class="inbox-compose-input" id="inbox-compose-input" placeholder="Write a message…" rows="2"></textarea>
-        <button class="inbox-compose-send" onclick="sendMessage()">Send →</button>
+        <div class="inbox-main" id="inbox-main">
+          <div class="inbox-thread-hd" id="inbox-thread-hd"></div>
+          <div class="inbox-messages" id="inbox-messages"></div>
+          <div class="inbox-compose" id="inbox-compose" style="display: none">
+            <textarea
+              class="inbox-compose-input"
+              id="inbox-compose-input"
+              placeholder="Write a message…"
+              rows="2"
+            ></textarea>
+            <button class="inbox-compose-send" onclick="sendMessage()">
+              Send →
+            </button>
+          </div>
+        </div>
       </div>
+
+      <footer class="site-footer">
+        <div class="footer-inner">
+          <div class="footer-logo">Prema</div>
+          <div class="footer-mid">
+            <span>Unconditional love in action.</span>
+          </div>
+          <div class="footer-party">
+            Brought to you by
+            <a href="https://theparty.red" target="_blank">The Red Party</a>
+          </div>
+        </div>
+      </footer>
     </div>
-  </div>
+    <!-- /page-inbox -->
 
-  <footer class="site-footer">
-    <div class="footer-inner">
-      <div class="footer-logo">Prema</div>
-      <div class="footer-mid"><span>Unconditional love in action.</span></div>
-      <div class="footer-party">Brought to you by <a href="https://theparty.red" target="_blank">The Red Party</a></div>
-    </div>
-  </footer>
-
-</div><!-- /page-inbox -->
-
-<!-- ══════════════════════════════════════
+    <!-- ══════════════════════════════════════
      MODAL
 ══════════════════════════════════════ -->
-<div class="overlay" id="overlay" onclick="handleOverlay(event)">
-  <div class="modal" id="modal">
-    <button class="modal-close" onclick="closeModal()">×</button>
-    <div id="modal-body"></div>
-  </div>
-</div>
+    <div class="overlay" id="overlay" onclick="handleOverlay(event)">
+      <div class="modal" id="modal">
+        <button class="modal-close" onclick="closeModal()">×</button>
+        <div id="modal-body"></div>
+      </div>
+    </div>
 
-<!-- TOAST -->
-<div class="toast" id="toast"></div>
+    <!-- TOAST -->
+    <div class="toast" id="toast"></div>
 
-<script src="/script.js"></script>
-</body>
+    <script src="/script.js"></script>
+  </body>
 </html>
