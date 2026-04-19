@@ -422,7 +422,9 @@ function loadSettings() {
   const preview = document.getElementById("settings-avatar-preview");
   const initials = document.getElementById("settings-avatar-initials");
   if (currentUser.avatar_url) {
-    preview.src = currentUser.avatar_url;
+    preview.src = currentUser.avatar_url.startsWith('http') 
+  ? currentUser.avatar_url 
+  : `https://dev.prema.red${currentUser.avatar_url}`;
     preview.style.display = "block";
     initials.style.display = "none";
   } else {
@@ -496,7 +498,7 @@ async function uploadAvatar() {
 
     currentUser.avatar_url = data.avatar_url;
     const preview = document.getElementById("settings-avatar-preview");
-    preview.src = data.avatar_url;
+    preview.src =  `https://dev.prema.red${data.avatar_url}`;
     preview.style.display = "block";
     document.getElementById("settings-avatar-initials").style.display = "none";
     updateNavAuth();
