@@ -81,12 +81,20 @@ router.get('/:slug', async (req, res) => {
       [org.id]
     );
 
-    // Get events
+    // Get events with their open needs counts
     const events = await db.query(
       `SELECT events.*,
-        COUNT(event_rsvps.id) as rsvp_count
+        COUNT(DISTINCT event_rsvps.id) as rsvp_count,
+        COUNT(DISTINCT posts.id) FILTER (
+          WHERE posts.type = 'need'
+          AND posts.is_active = TRUE
+          AND posts.is_removed = FALSE
+          AND posts.claimed_by IS NULL
+          AND posts.fulfilled_at IS NULL
+        ) as open_needs_count
        FROM events
        LEFT JOIN event_rsvps ON events.id = event_rsvps.event_id
+       LEFT JOIN posts ON posts.event_id = events.id
        WHERE events.org_id = $1
        AND events.is_removed = FALSE
        GROUP BY events.id
@@ -94,8 +102,24 @@ router.get('/:slug', async (req, res) => {
       [org.id]
     );
 
+    // Get total open needs for the org (general + event-linked)
+    const openNeeds = await db.query(
+      `SELECT COUNT(*) as count
+       FROM posts
+       WHERE posts.org_id = $1
+       AND posts.type = 'need'
+       AND posts.is_active = TRUE
+       AND posts.is_removed = FALSE
+       AND posts.claimed_by IS NULL
+       AND posts.fulfilled_at IS NULL`,
+      [org.id]
+    );
+
     res.json({
-      org,
+      org: {
+        ...org,
+        open_needs_count: Number(openNeeds.rows[0].count)
+      },
       announcements: announcements.rows,
       events: events.rows
     });

@@ -340,6 +340,7 @@ let pendingLatitude = null;
 let pendingLongitude = null;
 let userLatitude = null;
 let userLongitude = null;
+let currentOrgData = null;
 
 function requireAuth(action) {
   if (loggedIn) {
@@ -953,6 +954,66 @@ function buildModal(type) {
       <button class="form-submit" onclick="submitPost('offer')">Post this Ability →</button>
     `;
   }
+  if (type === 'post-org') {
+    if (!currentOrgData) return '';
+    const { org, events } = currentOrgData;
+    const eventOptions = events.map(e =>
+      `<option value="${e.id}">${e.title}</option>`
+    ).join('');
+
+    return `
+      <div class="modal-title">Post to ${org.name}</div>
+      <p class="modal-sub">Create a need or an ability for your org.</p>
+
+      <div class="form-field">
+        <label class="form-label">Type</label>
+        <div class="form-radio-row">
+          <label class="form-radio">
+            <input type="radio" name="org-post-type" value="need" checked>
+            <span>I need something</span>
+          </label>
+          <label class="form-radio">
+            <input type="radio" name="org-post-type" value="ability">
+            <span>I can offer something</span>
+          </label>
+        </div>
+      </div>
+
+      <div class="form-field">
+        <label class="form-label">Attach to</label>
+        <select id="org-post-event" class="form-select">
+          <option value="">General — not tied to an event</option>
+          ${eventOptions}
+        </select>
+      </div>
+
+      <div class="form-field">
+        <label class="form-label">Title</label>
+        <input type="text" id="org-post-title" class="form-input" placeholder="What's the request?">
+      </div>
+
+      <div class="form-field">
+        <label class="form-label">Details</label>
+        <textarea id="org-post-body" class="form-textarea" placeholder="Give some context. The more specific, the better."></textarea>
+      </div>
+
+      <div class="form-row">
+        <div class="form-field">
+          <label class="form-label">Category</label>
+          <select id="org-post-cat" class="form-select">${catOptionsHTML(org.scope)}</select>
+        </div>
+        <div class="form-field">
+          <label class="form-label">Visibility</label>
+          <select id="org-post-privacy" class="form-select">
+            <option value="true" selected>Members only</option>
+            <option value="false">Public — anyone can help</option>
+          </select>
+        </div>
+      </div>
+
+      <button class="form-submit" onclick="submitOrgPost()">Post →</button>
+    `;
+  }
   if (type === "add-org") {
     return `
       <div class="modal-title">Add an Organization</div>
@@ -1087,6 +1148,54 @@ async function submitPost(kind) {
   } catch (err) {
     console.error("Submit post error:", err);
     showToast("Could not connect to server.");
+  }
+}
+
+async function submitOrgPost() {
+  if (!currentOrgData) return;
+  const { org } = currentOrgData;
+
+  const type = document.querySelector('input[name="org-post-type"]:checked')?.value;
+  const eventId = document.getElementById('org-post-event')?.value;
+  const title = document.getElementById('org-post-title')?.value.trim();
+  const body = document.getElementById('org-post-body')?.value.trim();
+  const category = document.getElementById('org-post-cat')?.value;
+  const membersOnly = document.getElementById('org-post-privacy')?.value === 'true';
+
+  if (!title || !body || !category) {
+    showToast('Please fill in all required fields.');
+    return;
+  }
+
+  try {
+    const res = await fetch(`${API}/posts`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      credentials: 'include',
+      body: JSON.stringify({
+        type,
+        scope: org.scope,
+        category,
+        title,
+        body,
+        org_id: org.id,
+        event_id: eventId || null,
+        members_only: membersOnly
+      })
+    });
+
+    const data = await res.json();
+    if (!res.ok) {
+      showToast(data.error || 'Could not post.');
+      return;
+    }
+
+    closeModal();
+    showToast(`★ Posted to ${org.name}.`);
+    openOrgDetail(currentOrgSlug, currentOrgFromPage);
+  } catch (err) {
+    console.error('Submit org post error:', err);
+    showToast('Could not connect to server.');
   }
 }
 
@@ -1531,6 +1640,20 @@ async function openOrgDetail(slug, fromPage) {
 
     const { org, announcements, events } = data;
 
+    // Fetch org-scoped posts (needs & abilities)
+    let orgPosts = [];
+    try {
+      const postsRes = await fetch(`${API}/posts?org_id=${org.id}`, {
+        credentials: 'include'
+      });
+      if (postsRes.ok) {
+        const postsData = await postsRes.json();
+        orgPosts = postsData.posts || [];
+      }
+    } catch (err) {
+      console.error('Load org posts error:', err);
+    }
+
     // Check membership status + role if logged in
     let memberStatus = "none";
     let isOrgAdmin = false;
@@ -1541,10 +1664,101 @@ async function openOrgDetail(slug, fromPage) {
       const memData = await memRes.json();
       memberStatus = memData.status || "none";
       isOrgAdmin = memData.role === "admin" && memData.status === "active";
+      currentOrgData = { org, events, memberStatus, isOrgAdmin };
     }
 
     const annCount = announcements.length;
     const evCount = events.length;
+
+    // Render org posts, grouped by General + per event
+    const renderPostCard = (p) => {
+      const typeBadge = p.type === 'need'
+        ? '<span class="od-post-badge od-post-badge-need">NEED</span>'
+        : '<span class="od-post-badge od-post-badge-ability">ABILITY</span>';
+
+      let status = '';
+      if (p.fulfilled_at) {
+        status = '<div class="od-post-status od-post-status-fulfilled">✓ Fulfilled</div>';
+      } else if (p.claimed_by) {
+        const claimerName = p.claimed_by === currentUser?.id
+          ? 'you'
+          : (p.claimer_name || p.claimer_username || 'someone');
+        status = `<div class="od-post-status od-post-status-claimed">✓ Claimed by ${claimerName}</div>`;
+      }
+
+      let actionBtn = '';
+      if (!p.fulfilled_at) {
+        if (p.type === 'need' && !p.claimed_by && p.user_id !== currentUser?.id) {
+          actionBtn = `<button class="od-post-btn" onclick="claimPost(${p.id})">I got this</button>`;
+        } else if (p.claimed_by === currentUser?.id) {
+          actionBtn = `<button class="od-post-btn od-post-btn-secondary" onclick="unclaimPost(${p.id})">Unclaim</button>`;
+        }
+        // Fulfill button for post owner or org admin
+        if ((p.user_id === currentUser?.id || isOrgAdmin) && p.claimed_by) {
+          actionBtn += `<button class="od-post-btn" onclick="fulfillPost(${p.id})">Mark fulfilled</button>`;
+        }
+      }
+
+      const privacyHint = p.members_only
+        ? '<span class="od-post-privacy">🔒 Members only</span>'
+        : '<span class="od-post-privacy">🌐 Public</span>';
+
+      return `
+        <div class="od-post">
+          <div class="od-post-top">
+            ${typeBadge}
+            ${privacyHint}
+          </div>
+          <div class="od-post-title">${p.title}</div>
+          <div class="od-post-body">${p.body}</div>
+          <div class="od-post-footer">
+            <span class="od-post-author">Posted by ${p.display_name || p.username}</span>
+            <div class="od-post-actions">${actionBtn}</div>
+          </div>
+          ${status}
+        </div>
+      `;
+    };
+
+    // Group posts: general (no event) + by event
+    const generalPosts = orgPosts.filter(p => !p.event_id);
+    const postsByEvent = {};
+    orgPosts.filter(p => p.event_id).forEach(p => {
+      if (!postsByEvent[p.event_id]) postsByEvent[p.event_id] = [];
+      postsByEvent[p.event_id].push(p);
+    });
+
+    const generalSection = `
+      <div class="od-post-section">
+        <div class="od-post-section-hd">General</div>
+        ${generalPosts.length > 0
+          ? generalPosts.map(renderPostCard).join('')
+          : '<p class="od-empty">No general needs or abilities yet.</p>'}
+      </div>
+    `;
+
+    const eventSections = events.map(ev => {
+      const eventPosts = postsByEvent[ev.id] || [];
+      if (eventPosts.length === 0) return '';
+      return `
+        <div class="od-post-section">
+          <div class="od-post-section-hd">
+            ${ev.title}
+            ${ev.event_date ? `<span class="od-post-section-date">${ev.event_date}</span>` : ''}
+          </div>
+          ${eventPosts.map(renderPostCard).join('')}
+        </div>
+      `;
+    }).join('');
+
+    const postBtn = memberStatus === 'active' ? `
+      <button class="od-post-create-btn" onclick="openModal('post-org')">
+        + Post to ${org.name}
+      </button>
+    ` : '';
+
+    const postsHTML = postBtn + generalSection + eventSections;
+    const openNeedsTotal = org.open_needs_count || 0;
 
     const annHTML =
       annCount > 0
@@ -1677,6 +1891,9 @@ async function openOrgDetail(slug, fromPage) {
             <button class="od-tab" onclick="switchOdTab('events', this)">
               Events${evCount > 0 ? ` <span class="od-tab-badge">${evCount}</span>` : ""}
             </button>
+            <button class="od-tab" onclick="switchOdTab('posts', this)">
+              Needs &amp; Offers${openNeedsTotal > 0 ? ` <span class="od-tab-badge">${openNeedsTotal}</span>` : ''}
+            </button>
             ${membersTabBtn}
           </div>
 
@@ -1688,6 +1905,10 @@ async function openOrgDetail(slug, fromPage) {
           <div class="od-tab-panel od-tab-panel-hidden" id="od-panel-events">
             ${evAdminHTML}
             <div class="od-events">${evHTML}</div>
+          </div>
+
+           <div class="od-tab-panel od-tab-panel-hidden" id="od-panel-posts">
+            ${postsHTML}
           </div>
 
           ${membersTabPanel}
@@ -1776,6 +1997,57 @@ async function rsvpEvent(orgId, eventId, btn) {
   } catch (err) {
     console.error("RSVP error:", err);
     showToast("Could not connect to server.");
+  }
+}
+
+async function claimPost(postId) {
+  if (!loggedIn) { requireAuth(() => claimPost(postId)); return; }
+
+  try {
+    const res = await fetch(`${API}/posts/${postId}/claim`, {
+      method: 'POST',
+      credentials: 'include'
+    });
+    const data = await res.json();
+    if (!res.ok) { showToast(data.error || 'Could not claim.'); return; }
+    showToast('✓ Claimed. A thread was opened so you can coordinate.');
+    openOrgDetail(currentOrgSlug, currentOrgFromPage);
+  } catch (err) {
+    console.error('Claim error:', err);
+    showToast('Could not connect to server.');
+  }
+}
+
+async function unclaimPost(postId) {
+  try {
+    const res = await fetch(`${API}/posts/${postId}/claim`, {
+      method: 'DELETE',
+      credentials: 'include'
+    });
+    const data = await res.json();
+    if (!res.ok) { showToast(data.error || 'Could not unclaim.'); return; }
+    showToast('Unclaimed.');
+    openOrgDetail(currentOrgSlug, currentOrgFromPage);
+  } catch (err) {
+    console.error('Unclaim error:', err);
+    showToast('Could not connect to server.');
+  }
+}
+
+async function fulfillPost(postId) {
+  if (!confirm('Mark this post as fulfilled? This cannot be undone.')) return;
+  try {
+    const res = await fetch(`${API}/posts/${postId}/fulfill`, {
+      method: 'POST',
+      credentials: 'include'
+    });
+    const data = await res.json();
+    if (!res.ok) { showToast(data.error || 'Could not fulfill.'); return; }
+    showToast('✓ Marked fulfilled. Thank you.');
+    openOrgDetail(currentOrgSlug, currentOrgFromPage);
+  } catch (err) {
+    console.error('Fulfill error:', err);
+    showToast('Could not connect to server.');
   }
 }
 
