@@ -513,29 +513,21 @@ async function uploadAvatar() {
 }
 
 function buildSignInModal() {
-  const hint = pendingAction
-    ? '<p class="auth-gate-hint">Sign in to continue.</p>'
-    : "";
+  const hint = pendingAction ? '<p class="auth-gate-hint">Sign in to continue.</p>' : '';
   return `
     <div class="modal-title">Sign In</div>
     <p class="modal-sub">Welcome back. The community needs you.</p>${hint}
     <div class="form-field">
       <label class="form-label">Email</label>
-      <input type="email" class="form-input" id="signin-email" placeholder="your@email.com"
-        onkeydown="if(event.key==='Enter') submitSignIn()">
+      <input type="email" class="form-input" id="signin-email" placeholder="your@email.com">
     </div>
     <div class="form-field">
       <label class="form-label">Password</label>
-      <input type="password" class="form-input" id="signin-password" placeholder="••••••••"
-        onkeydown="if(event.key==='Enter') submitSignIn()">
+      <input type="password" class="form-input" id="signin-password" placeholder="••••••••">
     </div>
     <button class="form-submit" onclick="submitSignIn()">Sign In →</button>
-    <p class="auth-switch">
-      Don't have an account? <span class="auth-link" onclick="openModal('signup')">Create one →</span>
-    </p>
-    <p class="auth-switch" style="margin-top:0.4rem">
-      <span class="auth-link" onclick="openModal('forgot-password')">Forgot your password?</span>
-    </p>
+    <p class="auth-switch">Don't have an account? <span class="auth-link" onclick="openModal('signup')">Create one →</span></p>
+    <p class="auth-switch">Didn't get a verification email? <span class="auth-link" onclick="resendVerification()">Resend it →</span></p>
   `;
 }
 
@@ -584,6 +576,26 @@ async function submitSignIn() {
   } catch (err) {
     console.error("Signin error:", err);
     showToast("Could not connect to server.");
+  }
+}
+
+async function resendVerification() {
+  const email = document.getElementById('signin-email')?.value.trim();
+  if (!email) {
+    showToast('Enter your email above first.');
+    return;
+  }
+  try {
+    const res = await fetch(`${API}/auth/resend-verification`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email })
+    });
+    const data = await res.json();
+    showToast(data.message || 'If that email needs verification, a new link has been sent.');
+  } catch (err) {
+    console.error('Resend verification error:', err);
+    showToast('Could not connect to server.');
   }
 }
 

@@ -5,6 +5,17 @@ const db = require('../db');
 const crypto = require('crypto');
 const { sendVerificationEmail, sendPasswordResetEmail } = require('../email');
 
+// Track recent resend verification requests (email -> timestamp ms)
+const RESEND_COOLDOWN_MS = 60 * 1000; // 60 seconds between sends per email
+const resendCooldowns = new Map();
+
+// Periodically clear expired entries so the map doesn't grow forever
+setInterval(() => {
+  const cutoff = Date.now() - RESEND_COOLDOWN_MS;
+  for (const [email, ts] of resendCooldowns) {
+    if (ts < cutoff) resendCooldowns.delete(email);
+  }
+}, 5 * 60 * 1000);
 
 // SIGN UP
 router.post('/signup', async (req, res) => {
@@ -153,6 +164,59 @@ router.get('/verify/:token', async (req, res) => {
 
   } catch (err) {
     console.error('Verify error:', err.message);
+    res.status(500).json({ error: 'Something went wrong' });
+  }
+});
+
+// RESEND VERIFICATION
+router.post('/resend-verification', async (req, res) => {
+  const { email } = req.body;
+
+  if (!email) {
+    return res.status(400).json({ error: 'Email is required' });
+  }
+
+  const genericResponse = { message: 'If that email needs verification, a new link has been sent.' };
+
+  // Rate limit — silently skip if we recently sent one to this email
+  const lastSent = resendCooldowns.get(email);
+  if (lastSent && Date.now() - lastSent < RESEND_COOLDOWN_MS) {
+    return res.json(genericResponse);
+  }
+
+  try {
+    const result = await db.query(
+      'SELECT id, username, is_verified FROM users WHERE email = $1',
+      [email]
+    );
+
+    if (result.rows.length === 0) return res.json(genericResponse);
+
+    const user = result.rows[0];
+    if (user.is_verified) return res.json(genericResponse);
+
+    await db.query('DELETE FROM email_verifications WHERE user_id = $1', [user.id]);
+
+    const token = crypto.randomBytes(32).toString('hex');
+    const expires = new Date(Date.now() + 24 * 60 * 60 * 1000);
+
+    await db.query(
+      'INSERT INTO email_verifications (user_id, token, expires_at) VALUES ($1, $2, $3)',
+      [user.id, token, expires]
+    );
+
+    try {
+      await sendVerificationEmail(email, user.username, token);
+      console.log('Resent verification email to:', email);
+      resendCooldowns.set(email, Date.now()); // record after success
+    } catch (emailErr) {
+      console.error('Resend email failed:', emailErr.message);
+    }
+
+    return res.json(genericResponse);
+
+  } catch (err) {
+    console.error('Resend verification error:', err.message);
     res.status(500).json({ error: 'Something went wrong' });
   }
 });
