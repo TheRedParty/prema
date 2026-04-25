@@ -54,17 +54,19 @@ router.get('/', async (req, res) => {
 // GET SINGLE ORG
 router.get('/:slug', async (req, res) => {
   try {
-    const result = await db.query(
-      `SELECT orgs.*,
-        COUNT(org_members.id) FILTER (WHERE org_members.status = 'active') as member_count
-       FROM orgs
-       LEFT JOIN org_members ON orgs.id = org_members.org_id
-       WHERE orgs.slug = $1
-       AND orgs.status = 'active'
-       AND orgs.is_removed = FALSE
-       GROUP BY orgs.id`,
-      [req.params.slug]
-    );
+   const viewerId = req.session.userId || null;
+
+const result = await db.query(
+  `SELECT orgs.*,
+    COUNT(org_members.id) FILTER (WHERE org_members.status = 'active') as member_count
+   FROM orgs
+   LEFT JOIN org_members ON orgs.id = org_members.org_id
+   WHERE orgs.slug = $1
+     AND orgs.is_removed = FALSE
+     AND (orgs.status = 'active' OR (orgs.status = 'pending_payment' AND orgs.created_by = $2))
+   GROUP BY orgs.id`,
+  [req.params.slug, viewerId]
+);
 
     if (result.rows.length === 0) {
       return res.status(404).json({ error: 'Organization not found' });
