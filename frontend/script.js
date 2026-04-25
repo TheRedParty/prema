@@ -1686,6 +1686,11 @@ function switchOdTab(name, btn) {
 async function openOrgDetail(slug, fromPage) {
   currentOrgSlug = slug;
   currentOrgFromPage = fromPage;
+
+  // Read & strip ?contribution=success|canceled from URL before pushState
+  const urlObj = new URL(window.location.href);
+  const contributionParam = urlObj.searchParams.get('contribution');
+  // Always push a clean URL so the param doesn't persist on back/forward navigation
   window.history.pushState({ page: "org-detail", slug }, "", `/orgs/${slug}`);
 
   try {
@@ -1701,6 +1706,23 @@ async function openOrgDetail(slug, fromPage) {
     }
 
     const { org, announcements, events } = data;
+
+     // Auto-activate if pending_payment and the viewer is the owner
+    // (covers: Stripe redirect back with cancel, stale pending from abandoned tab, etc.)
+    if (org.status === 'pending_payment' && loggedIn && currentUser?.id === org.created_by) {
+      try {
+        const actRes = await fetch(`${API}/orgs/${org.id}/activate-without-payment`, {
+          method: 'POST',
+          credentials: 'include'
+        });
+        const actData = await actRes.json();
+        if (actData.activated) {
+          org.status = 'active';
+        }
+      } catch (err) {
+        console.error('Auto-activate error:', err);
+      }
+    }
 
     // Fetch org-scoped posts (needs & abilities)
     let orgPosts = [];
@@ -1929,6 +1951,30 @@ async function openOrgDetail(slug, fromPage) {
       </div>
     `
       : "";
+
+         // Build contribution banner if user is returning from Stripe
+    let contributionBanner = '';
+    if (contributionParam === 'success') {
+      contributionBanner = `
+        <div class="contribution-banner contribution-banner-success">
+          <span class="contribution-banner-mark">★</span>
+          <div class="contribution-banner-text">
+            <strong>Thanks for contributing.</strong> Your org is live and your contribution helps keep Prema running.
+          </div>
+          <button class="contribution-banner-close" onclick="this.parentElement.remove()" aria-label="Dismiss">×</button>
+        </div>
+      `;
+    } else if (contributionParam === 'canceled') {
+      contributionBanner = `
+        <div class="contribution-banner contribution-banner-neutral">
+          <span class="contribution-banner-mark">🌹</span>
+          <div class="contribution-banner-text">
+            <strong>Your org is live.</strong> Pay what you can — $0 is always okay.
+          </div>
+          <button class="contribution-banner-close" onclick="this.parentElement.remove()" aria-label="Dismiss">×</button>
+        </div>
+      `;
+    }
 
     document.getElementById("page-org-detail").innerHTML = `
       <div class="page-hero-sm">

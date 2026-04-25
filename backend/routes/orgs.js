@@ -243,7 +243,7 @@ router.post('/:id/checkout', requireAuth, async (req, res) => {
     }
 
     // Build redirect URLs
-    const baseUrl = process.env.BASE_URL || 'http://localhost:5500/frontend';
+    const baseUrl = process.env.FRONTEND_URL || 'http://localhost:5500';
     const successUrl = `${baseUrl}/#/org/${org.slug}?contribution=success`;
     const cancelUrl  = `${baseUrl}/#/org/${org.slug}?contribution=canceled`;
 
@@ -281,6 +281,37 @@ router.post('/:id/checkout', requireAuth, async (req, res) => {
   } catch (err) {
     console.error('Create checkout session error:', err.message);
     res.status(500).json({ error: 'Could not create checkout session' });
+  }
+});
+
+// ACTIVATE A PENDING ORG WITHOUT PAYMENT (canceled checkout, abandoned tab, or owner revisit)
+router.post('/:id/activate-without-payment', requireAuth, async (req, res) => {
+  const orgId = parseInt(req.params.id, 10);
+  if (isNaN(orgId)) {
+    return res.status(400).json({ error: 'Invalid org ID' });
+  }
+
+  try {
+    const result = await db.query(
+      `UPDATE orgs
+         SET status = 'active'
+       WHERE id = $1
+         AND status = 'pending_payment'
+         AND created_by = $2
+       RETURNING id, slug, status`,
+      [orgId, req.session.userId]
+    );
+
+    if (result.rows.length === 0) {
+      // Either org doesn't exist, isn't yours, or isn't pending_payment — all fine, just no-op
+      return res.json({ activated: false });
+    }
+
+    res.json({ activated: true, org: result.rows[0] });
+
+  } catch (err) {
+    console.error('Activate without payment error:', err.message);
+    res.status(500).json({ error: 'Could not activate organization' });
   }
 });
 

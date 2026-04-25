@@ -2917,3 +2917,52 @@ nav {
   max-width: 160px;
   font-variant-numeric: tabular-nums;
 }
+
+/* ═══ CONTRIBUTION BANNER ═══ */
+.contribution-banner {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin: 18px auto;
+  max-width: 900px;
+  padding: 14px 18px;
+  border-radius: 4px;
+  border: 1px solid rgba(201, 168, 76, 0.5);
+  background: rgba(201, 168, 76, 0.1);
+  font-size: 15px;
+  line-height: 1.4;
+}
+.contribution-banner-success {
+  border-color: rgba(201, 168, 76, 0.7);
+  background: rgba(201, 168, 76, 0.15);
+}
+.contribution-banner-neutral {
+  border-color: rgba(237, 224, 196, 0.4);
+  background: rgba(237, 224, 196, 0.06);
+}
+.contribution-banner-mark {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 24px;
+  color: var(--gold, #C9A84C);
+  flex-shrink: 0;
+}
+.contribution-banner-text {
+  flex: 1;
+}
+.contribution-banner-text strong {
+  color: var(--gold, #C9A84C);
+  font-weight: 600;
+}
+.contribution-banner-close {
+  background: none;
+  border: none;
+  color: var(--parchment, #EDE0C4);
+  opacity: 0.5;
+  font-size: 22px;
+  cursor: pointer;
+  padding: 0 6px;
+  line-height: 1;
+}
+.contribution-banner-close:hover {
+  opacity: 1;
+}
