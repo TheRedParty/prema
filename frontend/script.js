@@ -1684,6 +1684,7 @@ function switchOdTab(name, btn) {
 }
 
 async function openOrgDetail(slug, fromPage) {
+  console.log('[openOrgDetail] CALLED', new Date().toISOString(), { slug, fromPage }, new Error().stack);
   currentOrgSlug = slug;
   currentOrgFromPage = fromPage;
 
