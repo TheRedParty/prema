@@ -1962,7 +1962,6 @@ async function openOrgDetail(slug, fromPage) {
           <div class="contribution-banner-text">
             <strong>Thanks for contributing.</strong> Your org is live and your contribution helps keep Prema running.
           </div>
-          <button class="contribution-banner-close" onclick="this.parentElement.remove()" aria-label="Dismiss">×</button>
         </div>
       `;
     } else if (contributionParam === 'canceled') {
