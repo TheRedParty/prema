@@ -26,7 +26,6 @@ async function seed() {
     await db.query("DELETE FROM events");
     await db.query("DELETE FROM org_announcements");
     await db.query("DELETE FROM org_members");
-    await db.query("DELETE FROM org_creation_requests");
     await db.query("DELETE FROM orgs");
     await db.query("DELETE FROM thank_you_notes");
     await db.query("DELETE FROM vouches");
@@ -44,7 +43,7 @@ async function seed() {
     const tables = [
       "users", "orgs", "posts", "threads", "messages", "events",
       "event_rsvps", "org_members", "org_announcements",
-      "org_creation_requests", "reports", "completions",
+      "reports", "completions",
       "thank_you_notes", "vouches", "email_verifications",
       "password_resets",
     ];

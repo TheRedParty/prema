@@ -2372,7 +2372,6 @@ function switchAdminTab(tab, btn) {
 async function loadAdminTab(tab) {
   if (tab === "reports") loadAdminReports();
   if (tab === "users") loadAdminUsers();
-  if (tab === "orgs") loadAdminOrgs();
 }
 
 async function initAdmin() {
@@ -2385,10 +2384,6 @@ async function initAdmin() {
     if (data.pendingReports > 0) {
       document.getElementById("admin-reports-badge").textContent =
         data.pendingReports;
-    }
-    if (data.pendingOrgs > 0) {
-      document.getElementById("admin-orgs-badge").textContent =
-        data.pendingOrgs;
     }
   } catch (err) {
     console.error("Admin stats error:", err);
@@ -2547,74 +2542,7 @@ async function unbanUser(userId) {
   }
 }
 
-async function loadAdminOrgs() {
-  try {
-    const res = await fetch(`${API}/admin/org-requests`, {
-      credentials: "include",
-    });
-    const data = await res.json();
 
-    const list = document.getElementById("admin-orgs-list");
-
-    if (!data.requests.length) {
-      list.innerHTML = '<p class="admin-empty">No pending org requests.</p>';
-      return;
-    }
-
-    list.innerHTML = data.requests
-      .map(
-        (r) => `
-      <div class="admin-org-card">
-        <div class="admin-org-name">${r.name}</div>
-        <div class="admin-org-meta">${r.scope} · Submitted by ${r.display_name || r.username} on ${new Date(r.created_at).toLocaleDateString()}</div>
-        <div class="admin-org-desc">${r.description}</div>
-        ${r.values_statement ? `<div class="admin-org-values"><strong>Values:</strong> ${r.values_statement}</div>` : ""}
-        ${r.website ? `<div class="admin-org-website"><strong>Website:</strong> ${r.website}</div>` : ""}
-        ${r.contact_email ? `<div class="admin-org-contact"><strong>Contact:</strong> ${r.contact_email}</div>` : ""}
-        <div class="admin-report-actions">
-          <button class="admin-btn admin-btn-approve" onclick="approveOrg(${r.id})">Approve</button>
-          <button class="admin-btn admin-btn-remove" onclick="rejectOrg(${r.id})">Reject</button>
-        </div>
-      </div>
-    `,
-      )
-      .join("");
-  } catch (err) {
-    console.error("Load org requests error:", err);
-  }
-}
-
-async function approveOrg(requestId) {
-  try {
-    const res = await fetch(`${API}/admin/org-requests/${requestId}/approve`, {
-      method: "POST",
-      credentials: "include",
-    });
-
-    if (res.ok) {
-      showToast("Organization approved.");
-      loadAdminOrgs();
-    }
-  } catch (err) {
-    console.error("Approve org error:", err);
-  }
-}
-
-async function rejectOrg(requestId) {
-  try {
-    const res = await fetch(`${API}/admin/org-requests/${requestId}/reject`, {
-      method: "POST",
-      credentials: "include",
-    });
-
-    if (res.ok) {
-      showToast("Request rejected.");
-      loadAdminOrgs();
-    }
-  } catch (err) {
-    console.error("Reject org error:", err);
-  }
-}
 
 /* ── INIT ── */
 document.addEventListener("DOMContentLoaded", async () => {

@@ -197,24 +197,6 @@ const orgAnnouncements = pgTable('org_announcements', {
   isRemoved: boolean('is_removed').default(false),
 });
 
-/* ─── ORG CREATION REQUESTS ─────────────────────────────── */
-const orgCreationRequests = pgTable('org_creation_requests', {
-  id: serial('id').primaryKey(),
-  submittedBy: integer('submitted_by').references(() => users.id),
-  name: varchar('name', { length: 255 }).notNull(),
-  type: varchar('type', { length: 100 }),
-  scope: varchar('scope', { length: 10 }),
-  description: text('description'),
-  website: varchar('website', { length: 255 }),
-  contactEmail: varchar('contact_email', { length: 255 }),
-  valuesStatement: text('values_statement'),
-  status: varchar('status', { length: 20 }).default('pending'),
-  adminNote: text('admin_note'),
-  createdAt: timestamp('created_at').defaultNow(),
-  reviewedBy: integer('reviewed_by').references(() => users.id),
-  reviewedAt: timestamp('reviewed_at'),
-});
-
 /* ─── EMAIL VERIFICATIONS ───────────────────────────────── */
 const emailVerifications = pgTable('email_verifications', {
   id: serial('id').primaryKey(),
@@ -268,7 +250,6 @@ module.exports = {
   eventRsvps,
   orgMembers,
   orgAnnouncements,
-  orgCreationRequests,
   emailVerifications,
   passwordResets,
   sessions,

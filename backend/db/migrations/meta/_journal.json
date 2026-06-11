@@ -22,6 +22,13 @@
       "when": 1776928249891,
       "tag": "0002_long_norman_osborn",
       "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1781208237435,
+      "tag": "0003_messy_radioactive_man",
+      "breakpoints": true
     }
   ]
 }
