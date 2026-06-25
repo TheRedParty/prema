@@ -2880,6 +2880,12 @@ async function openThreadById(threadId) {
       : thread.user_a_name || thread.user_a_username;
     const initial = otherName ? otherName.charAt(0).toUpperCase() : "?";
 
+  // Header action based on thread status
+    const hdAction =
+      thread.status === "complete"
+        ? `<span class="inbox-complete-badge">✓ Fulfilled</span>`
+        : `<button class="inbox-mark-done-btn" onclick="markThreadDone(${threadId})">Mark Fulfilled</button>`;
+
     // Update header
     document.getElementById("inbox-thread-hd").innerHTML = `
   <div class="inbox-mobile-back" onclick="closeMobileThread()">← Back</div>
@@ -2888,6 +2894,7 @@ async function openThreadById(threadId) {
     <div class="inbox-thread-hd-name">${otherName}</div>
     <div class="inbox-thread-hd-re">${thread.post_title ? "Re: " + thread.post_title : "Direct message"}</div>
   </div>
+  ${hdAction}
 `;
 
     // Render messages
@@ -2909,11 +2916,25 @@ async function openThreadById(threadId) {
       messagesEl.scrollTop = messagesEl.scrollHeight;
     }
 
-    // Show compose box and set current thread
-    document.getElementById("inbox-compose").style.display = "flex";
-    document.getElementById("inbox-compose-input").placeholder =
-      `Message ${otherName}…`;
+    // Set current thread, then render compose or post-fulfillment actions
     window.currentThreadId = threadId;
+    window.currentThreadOther = otherName;
+    const compose = document.getElementById("inbox-compose");
+    compose.style.display = "flex";
+
+    if (thread.status === "complete") {
+      compose.innerHTML = `
+        <div class="inbox-post-completion">
+          <p class="inbox-completion-label">Interaction fulfilled —</p>
+          <button class="inbox-completion-btn" onclick="openThankYouNote()">Leave a Thank You Note</button>
+        </div>
+      `;
+    } else {
+      compose.innerHTML = `
+        <textarea class="inbox-compose-input" id="inbox-compose-input" placeholder="Message ${otherName}…" rows="2"></textarea>
+        <button class="inbox-compose-send" onclick="sendMessage()">Send →</button>
+      `;
+    }
 
     // Mark thread as read locally and update badge
     const t = inboxThreads.find((t) => t.id === threadId);
@@ -2923,6 +2944,48 @@ async function openThreadById(threadId) {
     }
   } catch (err) {
     console.error("Open thread error:", err);
+  }
+}
+
+function openThankYouNote() {
+  const name = window.currentThreadOther || "them";
+  const body = `
+    <div class="modal-title">Leave a Thank You Note</div>
+    <p class="modal-sub">For <strong>${name}</strong>. Short, human, honest.</p>
+    <div class="form-field">
+      <textarea class="form-textarea" id="thankyou-text" placeholder="What did they do? What did it mean to you?" rows="4"></textarea>
+    </div>
+    <p class="form-hint">Thank you notes appear on ${name}'s public profile.</p>
+    <button class="form-submit" onclick="submitThankYou()">Send Thank You Note →</button>
+  `;
+  document.getElementById("modal-body").innerHTML = body;
+  document.getElementById("overlay").classList.add("open");
+  setTimeout(() => document.getElementById("thankyou-text")?.focus(), 100);
+}
+
+async function submitThankYou() {
+  const text = document.getElementById("thankyou-text")?.value.trim();
+  if (!text) {
+    showToast("Write a few words first.");
+    return;
+  }
+  try {
+    const res = await fetch(`${API}/threads/${window.currentThreadId}/thank-you`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      credentials: "include",
+      body: JSON.stringify({ body: text }),
+    });
+    const data = await res.json();
+    if (!res.ok) {
+      showToast(data.error || "Could not send note.");
+      return;
+    }
+    closeModal();
+    showToast("✿ Thank you note sent.");
+  } catch (err) {
+    console.error("Thank you note error:", err);
+    showToast("Could not connect to server.");
   }
 }
 
@@ -3196,6 +3259,25 @@ async function sendMessage() {
     openThreadById(window.currentThreadId);
   } catch (err) {
     console.error("Send message error:", err);
+    showToast("Could not connect to server.");
+  }
+}
+
+async function markThreadDone(threadId) {
+  try {
+    const res = await fetch(`${API}/threads/${threadId}/complete`, {
+      method: "POST",
+      credentials: "include",
+    });
+    const data = await res.json();
+    if (!res.ok) {
+      showToast(data.error || "Could not mark complete.");
+      return;
+    }
+    showToast("★ Marked complete. Thank you notes and vouching are unlocked.");
+    openThreadById(threadId); // re-render so the badge + actions update
+  } catch (err) {
+    console.error("Mark done error:", err);
     showToast("Could not connect to server.");
   }
 }
