@@ -2879,6 +2879,9 @@ async function openThreadById(threadId) {
       ? thread.user_b_name || thread.user_b_username
       : thread.user_a_name || thread.user_a_username;
     const initial = otherName ? otherName.charAt(0).toUpperCase() : "?";
+    const otherUsername = isMe
+      ? thread.user_b_username
+      : thread.user_a_username;
 
   // Header action based on thread status
     const hdAction =
@@ -2891,7 +2894,7 @@ async function openThreadById(threadId) {
   <div class="inbox-mobile-back" onclick="closeMobileThread()">← Back</div>
   <div class="inbox-thread-hd-avatar">${initial}</div>
   <div class="inbox-thread-hd-info">
-    <div class="inbox-thread-hd-name">${otherName}</div>
+    <div class="inbox-thread-hd-name" onclick="viewProfile('${otherUsername}')" style="cursor:pointer">${otherName}</div>
     <div class="inbox-thread-hd-re">${thread.post_title ? "Re: " + thread.post_title : "Direct message"}</div>
   </div>
   ${hdAction}
