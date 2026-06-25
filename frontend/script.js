@@ -2967,17 +2967,15 @@ async function openThreadById(threadId) {
     compose.style.display = "flex";
 
     if (thread.status === "complete") {
+      const vouchBtn = thread.already_vouched
+        ? `<button class="inbox-completion-btn inbox-vouch-btn" disabled>✓ Vouched</button>`
+        : `<button class="inbox-completion-btn inbox-vouch-btn" onclick="openVouch()">Vouch for ${otherName}</button>`;
       compose.innerHTML = `
         <div class="inbox-post-completion">
           <p class="inbox-completion-label">Interaction fulfilled —</p>
           <button class="inbox-completion-btn" onclick="openThankYouNote()">Leave a Thank You Note</button>
-          <button class="inbox-completion-btn inbox-vouch-btn" onclick="openVouch()">Vouch for ${otherName}</button>
+          ${vouchBtn}
         </div>
-      `;
-    } else {
-      compose.innerHTML = `
-        <textarea class="inbox-compose-input" id="inbox-compose-input" placeholder="Message ${otherName}…" rows="2"></textarea>
-        <button class="inbox-compose-send" onclick="sendMessage()">Send →</button>
       `;
     }
 
@@ -3067,6 +3065,7 @@ async function sendVouch() {
     }
     closeModal();
     showToast("★ You vouched for " + (window.currentThreadOther || "them") + ".");
+    if (window.currentThreadId) openThreadById(window.currentThreadId);
   } catch (err) {
     console.error("Vouch error:", err);
     showToast("Could not connect to server.");

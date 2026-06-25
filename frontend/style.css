@@ -2627,6 +2627,10 @@ nav {
   cursor: pointer;
   transition: all 0.15s;
 }
+.inbox-completion-btn:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
 .inbox-completion-btn:hover { border-color: rgba(237,224,196,0.5); color: #EDE0C4; }
 .inbox-vouch-btn { border-color: rgba(201,168,76,0.3); color: var(--gold); }
 .inbox-vouch-btn:hover { border-color: var(--gold); background: rgba(201,168,76,0.06); }

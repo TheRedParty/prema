@@ -123,6 +123,13 @@ router.get('/threads/:id', requireAuth, async (req, res) => {
       [req.params.id, req.session.userId]
     );
 
+    // Has the current user already vouched in this thread?
+    const vouchCheck = await db.query(
+      'SELECT 1 FROM vouches WHERE thread_id = $1 AND voucher_id = $2',
+      [req.params.id, req.session.userId]
+    );
+    t.already_vouched = vouchCheck.rows.length > 0;
+
     res.json({ thread: t, messages: messages.rows });
 
   } catch (err) {
