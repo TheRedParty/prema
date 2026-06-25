@@ -2662,6 +2662,43 @@ async function openProfileModal(username) {
   }
 }
 
+async function openPostDetail(postId) {
+  try {
+    const res = await fetch(`${API}/posts/${postId}`, {
+      credentials: "include",
+    });
+    const data = await res.json();
+    if (!res.ok) {
+      showToast(data.error || "Could not load post.");
+      return;
+    }
+    const p = data.post;
+    const typeLabel = p.type === "ability" ? "Ability" : "Need";
+    const author = p.display_name || p.username;
+    const meta = [
+      p.category,
+      p.location || p.user_location,
+      new Date(p.created_at).toLocaleDateString(),
+    ]
+      .filter(Boolean)
+      .join(" · ");
+
+    document.getElementById("modal-body").innerHTML = `
+      <div class="modal-title">${p.title}</div>
+      <div class="profile-post-card ${p.type === "ability" ? "offer" : "need"}" style="cursor:default">
+        <span class="profile-post-type">${typeLabel}</span>
+        <div class="profile-post-body">${p.body}</div>
+        <div class="profile-post-meta">${meta}</div>
+      </div>
+      <p class="form-hint">Posted by ${author}</p>
+    `;
+    document.getElementById("overlay").classList.add("open");
+  } catch (err) {
+    console.error("Post detail error:", err);
+    showToast("Could not load post.");
+  }
+}
+
 /* ══════════════════════════════════════
    PROFILE PAGE
 ══════════════════════════════════════ */
@@ -2895,7 +2932,11 @@ async function openThreadById(threadId) {
   <div class="inbox-thread-hd-avatar">${initial}</div>
   <div class="inbox-thread-hd-info">
     <div class="inbox-thread-hd-name" onclick="viewProfile('${otherUsername}')" style="cursor:pointer">${otherName}</div>
-    <div class="inbox-thread-hd-re">${thread.post_title ? "Re: " + thread.post_title : "Direct message"}</div>
+    <div class="inbox-thread-hd-re">${
+      thread.post_id
+        ? `Re: <span onclick="openPostDetail(${thread.post_id})" style="cursor:pointer;text-decoration:underline">${thread.post_title || "this post"}</span>`
+        : "Direct message"
+    }</div>
   </div>
   ${hdAction}
 `;
