@@ -2977,6 +2977,11 @@ async function openThreadById(threadId) {
           ${vouchBtn}
         </div>
       `;
+    } else {
+      compose.innerHTML = `
+        <textarea class="inbox-compose-input" id="inbox-compose-input" placeholder="Message ${otherName}…" rows="2"></textarea>
+        <button class="inbox-compose-send" onclick="sendMessage()">Send →</button>
+      `;
     }
 
     // Mark thread as read locally and update badge
