@@ -2997,14 +2997,10 @@ async function openThreadById(threadId) {
     compose.style.display = "flex";
 
     if (thread.status === "complete") {
-      const vouchBtn = thread.already_vouched
-        ? `<button class="inbox-completion-btn inbox-vouch-btn" disabled>✓ Vouched</button>`
-        : `<button class="inbox-completion-btn inbox-vouch-btn" onclick="openVouch()">Vouch for ${otherName}</button>`;
       compose.innerHTML = `
         <div class="inbox-post-completion">
           <p class="inbox-completion-label">Interaction fulfilled —</p>
           <button class="inbox-completion-btn" onclick="openThankYouNote()">Leave a Thank You Note</button>
-          ${vouchBtn}
         </div>
       `;
     } else {
@@ -3063,46 +3059,6 @@ async function submitThankYou() {
     showToast("✿ Thank you note sent.");
   } catch (err) {
     console.error("Thank you note error:", err);
-    showToast("Could not connect to server.");
-  }
-}
-
-function openVouch() {
-  const name = window.currentThreadOther || "them";
-  const body = `
-    <div class="modal-title">Vouch for ${name}</div>
-    <p class="modal-sub">A vouch is you putting your name behind <strong>${name}</strong> — telling the community they're real and good to work with.</p>
-    <div class="form-field">
-      <label class="form-label">Add a note (optional)</label>
-      <textarea class="form-textarea" id="vouch-text" placeholder="What would you want others to know?" rows="3"></textarea>
-    </div>
-    <p class="form-hint">Vouches appear on ${name}'s public profile. You can only vouch once per fulfilled interaction.</p>
-    <button class="form-submit" onclick="sendVouch()">Vouch for ${name} →</button>
-  `;
-  document.getElementById("modal-body").innerHTML = body;
-  document.getElementById("overlay").classList.add("open");
-  setTimeout(() => document.getElementById("vouch-text")?.focus(), 100);
-}
-
-async function sendVouch() {
-  const note = document.getElementById("vouch-text")?.value.trim();
-  try {
-    const res = await fetch(`${API}/threads/${window.currentThreadId}/vouch`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      credentials: "include",
-      body: JSON.stringify({ note: note || null }),
-    });
-    const data = await res.json();
-    if (!res.ok) {
-      showToast(data.error || "Could not record vouch.");
-      return;
-    }
-    closeModal();
-    showToast("★ You vouched for " + (window.currentThreadOther || "them") + ".");
-    if (window.currentThreadId) openThreadById(window.currentThreadId);
-  } catch (err) {
-    console.error("Vouch error:", err);
     showToast("Could not connect to server.");
   }
 }
