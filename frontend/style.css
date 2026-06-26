@@ -1570,6 +1570,27 @@ nav {
   text-transform: uppercase;
   color: rgba(237,224,196,0.4);
 }
+.profile-vouch-btn {
+  width: 100%;
+  background: #BB0000;
+  color: #fff;
+  border: none;
+  border-radius: 2px;
+  padding: 0.65rem 1rem;
+  margin-bottom: 1rem;
+  font-family: inherit;
+  font-size: 0.78rem;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  cursor: pointer;
+}
+.profile-vouch-btn:hover { background: #990000; }
+.profile-vouch-done {
+  color: #C9A84C;
+  font-size: 0.8rem;
+  letter-spacing: 0.04em;
+  margin-bottom: 1rem;
+}
 .profile-body {
   max-width: 860px;
   margin: 0 auto;

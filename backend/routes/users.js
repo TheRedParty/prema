@@ -70,12 +70,40 @@ router.get('/:username', async (req, res) => {
       [user.id]
     );
 
+    // What vouch action can the viewer take?
+    let vouchState = 'guest';
+    const viewerId = req.session.userId;
+    if (viewerId) {
+      if (viewerId === user.id) {
+        vouchState = 'self';
+      } else {
+        const hasVouched = await db.query(
+          'SELECT 1 FROM vouches WHERE voucher_id = $1 AND vouchee_id = $2',
+          [viewerId, user.id]
+        );
+        if (hasVouched.rows.length > 0) {
+          vouchState = 'vouched';
+        } else {
+          const completed = await db.query(
+            `SELECT 1 FROM threads
+             WHERE status = 'complete'
+             AND ((participant_a = $1 AND participant_b = $2)
+               OR (participant_a = $2 AND participant_b = $1))
+             LIMIT 1`,
+            [viewerId, user.id]
+          );
+          vouchState = completed.rows.length > 0 ? 'eligible' : 'ineligible';
+        }
+      }
+    }
+
     res.json({
       user,
       posts: posts.rows,
       vouches: vouches.rows,
       thankYouNotes: thankYouNotes.rows,
-      completedHelps: parseInt(completions.rows[0].count)
+      completedHelps: parseInt(completions.rows[0].count),
+      vouchState
     });
 
   } catch (err) {
@@ -135,6 +163,57 @@ router.post('/:username/report', requireAuth, async (req, res) => {
 
   } catch (err) {
     console.error('Report user error:', err.message);
+    res.status(500).json({ error: 'Something went wrong' });
+  }
+});
+
+// VOUCH FOR A PERSON
+router.post('/:username/vouch', requireAuth, async (req, res) => {
+  try {
+    const userRes = await db.query(
+      'SELECT id FROM users WHERE username = $1 AND is_banned = FALSE',
+      [req.params.username]
+    );
+    if (userRes.rows.length === 0) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+    const voucheeId = userRes.rows[0].id;
+    const voucherId = req.session.userId;
+
+    if (voucheeId === voucherId) {
+      return res.status(400).json({ error: "You can't vouch for yourself" });
+    }
+
+    // Once per person, ever
+    const existing = await db.query(
+      'SELECT 1 FROM vouches WHERE voucher_id = $1 AND vouchee_id = $2',
+      [voucherId, voucheeId]
+    );
+    if (existing.rows.length > 0) {
+      return res.status(400).json({ error: 'You have already vouched for this person' });
+    }
+
+    // Must have completed an interaction together
+    const completed = await db.query(
+      `SELECT 1 FROM threads
+       WHERE status = 'complete'
+       AND ((participant_a = $1 AND participant_b = $2)
+         OR (participant_a = $2 AND participant_b = $1))
+       LIMIT 1`,
+      [voucherId, voucheeId]
+    );
+    if (completed.rows.length === 0) {
+      return res.status(403).json({ error: 'You can only vouch for someone after completing an interaction together' });
+    }
+
+    await db.query(
+      'INSERT INTO vouches (voucher_id, vouchee_id) VALUES ($1, $2)',
+      [voucherId, voucheeId]
+    );
+
+    res.status(201).json({ message: 'Vouch recorded' });
+  } catch (err) {
+    console.error('Vouch error:', err.message);
     res.status(500).json({ error: 'Something went wrong' });
   }
 });

@@ -2703,12 +2703,14 @@ async function openPostDetail(postId) {
    PROFILE PAGE
 ══════════════════════════════════════ */
 
-async function viewProfile(username) {
+async function viewProfile(username, push = true) {
+  if (push) {
   window.history.pushState(
     { page: "profile", username },
     "",
     `/users/${username}`,
   );
+}
   try {
     const res = await fetch(`${API}/users/${username}`, {
       credentials: "include",
@@ -2721,7 +2723,7 @@ async function viewProfile(username) {
       return;
     }
 
-    const { user, posts, vouches, thankYouNotes, completedHelps } = data;
+    const { user, posts, vouches, thankYouNotes, completedHelps, vouchState } = data;
     const initial = (user.display_name || user.username)
       .charAt(0)
       .toUpperCase();
@@ -2763,9 +2765,17 @@ async function viewProfile(username) {
           .join("")
       : '<p style="opacity:0.4">No active posts.</p>';
 
-    // Vouches
+   // Vouch action, based on the viewer's relationship to this person
+    let vouchAction = "";
+    const vname = user.display_name || user.username;
+    if (vouchState === "eligible") {
+      vouchAction = `<button class="profile-vouch-btn" onclick="vouchForUser('${user.username}')">＋ Vouch for ${vname}</button>`;
+    } else if (vouchState === "vouched") {
+      vouchAction = `<div class="profile-vouch-done">✓ You vouched for ${vname}</div>`;
+    }
+
     const vouchesList = document.getElementById("profile-vouches-list");
-    vouchesList.innerHTML = vouches.length
+    const vouchesHtml = vouches.length
       ? vouches
           .map(
             (v) => `
@@ -2780,6 +2790,7 @@ async function viewProfile(username) {
           )
           .join("")
       : '<p style="opacity:0.4">No vouches yet.</p>';
+    vouchesList.innerHTML = vouchAction + vouchesHtml;
 
     // Thank you notes
     const thanksList = document.getElementById("profile-thanks-list");
@@ -2800,6 +2811,25 @@ async function viewProfile(username) {
   } catch (err) {
     console.error("View profile error:", err);
     showToast("Could not load profile.");
+  }
+}
+
+async function vouchForUser(username) {
+  try {
+    const res = await fetch(`${API}/users/${username}/vouch`, {
+      method: "POST",
+      credentials: "include",
+    });
+    const data = await res.json();
+    if (!res.ok) {
+      showToast(data.error || "Could not vouch.");
+      return;
+    }
+    showToast("★ You vouched for this person.");
+    viewProfile(username, false); // re-render so button + list + count update
+  } catch (err) {
+    console.error("Vouch error:", err);
+    showToast("Could not connect to server.");
   }
 }
 
