@@ -4,9 +4,11 @@
    ============================================================ */
 
 /* ── API ── */
-const API = (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')
-  ? 'http://localhost:3000/api'
-  : 'https://dev.prema.red/api';
+const API =
+  window.location.hostname === "localhost" ||
+  window.location.hostname === "127.0.0.1"
+    ? "http://localhost:3000/api"
+    : "https://dev.prema.red/api";
 
 /* ── CHAIN BUTTON ── */
 function buildChains() {
@@ -425,9 +427,9 @@ function loadSettings() {
   const preview = document.getElementById("settings-avatar-preview");
   const initials = document.getElementById("settings-avatar-initials");
   if (currentUser.avatar_url) {
-    preview.src = currentUser.avatar_url.startsWith('http') 
-  ? currentUser.avatar_url 
-  : `https://dev.prema.red${currentUser.avatar_url}`;
+    preview.src = currentUser.avatar_url.startsWith("http")
+      ? currentUser.avatar_url
+      : `https://dev.prema.red${currentUser.avatar_url}`;
     preview.style.display = "block";
     initials.style.display = "none";
   } else {
@@ -497,11 +499,14 @@ async function uploadAvatar() {
     });
 
     const data = await res.json();
-    if (!res.ok) { showToast(data.error || "Upload failed."); return; }
+    if (!res.ok) {
+      showToast(data.error || "Upload failed.");
+      return;
+    }
 
     currentUser.avatar_url = data.avatar_url;
     const preview = document.getElementById("settings-avatar-preview");
-    preview.src =  `https://dev.prema.red${data.avatar_url}`;
+    preview.src = `https://dev.prema.red${data.avatar_url}`;
     preview.style.display = "block";
     document.getElementById("settings-avatar-initials").style.display = "none";
     updateNavAuth();
@@ -513,7 +518,9 @@ async function uploadAvatar() {
 }
 
 function buildSignInModal() {
-  const hint = pendingAction ? '<p class="auth-gate-hint">Sign in to continue.</p>' : '';
+  const hint = pendingAction
+    ? '<p class="auth-gate-hint">Sign in to continue.</p>'
+    : "";
   return `
     <div class="modal-title">Sign In</div>
     <p class="modal-sub">Welcome back. The community needs you.</p>${hint}
@@ -580,22 +587,25 @@ async function submitSignIn() {
 }
 
 async function resendVerification() {
-  const email = document.getElementById('signin-email')?.value.trim();
+  const email = document.getElementById("signin-email")?.value.trim();
   if (!email) {
-    showToast('Enter your email above first.');
+    showToast("Enter your email above first.");
     return;
   }
   try {
     const res = await fetch(`${API}/auth/resend-verification`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ email })
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ email }),
     });
     const data = await res.json();
-    showToast(data.message || 'If that email needs verification, a new link has been sent.');
+    showToast(
+      data.message ||
+        "If that email needs verification, a new link has been sent.",
+    );
   } catch (err) {
-    console.error('Resend verification error:', err);
-    showToast('Could not connect to server.');
+    console.error("Resend verification error:", err);
+    showToast("Could not connect to server.");
   }
 }
 
@@ -966,12 +976,12 @@ function buildModal(type) {
       <button class="form-submit" onclick="submitPost('offer')">Post this Ability →</button>
     `;
   }
-  if (type === 'post-org') {
-    if (!currentOrgData) return '';
+  if (type === "post-org") {
+    if (!currentOrgData) return "";
     const { org, events } = currentOrgData;
-    const eventOptions = events.map(e =>
-      `<option value="${e.id}">${e.title}</option>`
-    ).join('');
+    const eventOptions = events
+      .map((e) => `<option value="${e.id}">${e.title}</option>`)
+      .join("");
 
     return `
       <div class="modal-title">Post to ${org.name}</div>
@@ -1183,23 +1193,26 @@ async function submitOrgPost() {
   if (!currentOrgData) return;
   const { org } = currentOrgData;
 
-  const type = document.querySelector('input[name="org-post-type"]:checked')?.value;
-  const eventId = document.getElementById('org-post-event')?.value;
-  const title = document.getElementById('org-post-title')?.value.trim();
-  const body = document.getElementById('org-post-body')?.value.trim();
-  const category = document.getElementById('org-post-cat')?.value;
-  const membersOnly = document.getElementById('org-post-privacy')?.value === 'true';
+  const type = document.querySelector(
+    'input[name="org-post-type"]:checked',
+  )?.value;
+  const eventId = document.getElementById("org-post-event")?.value;
+  const title = document.getElementById("org-post-title")?.value.trim();
+  const body = document.getElementById("org-post-body")?.value.trim();
+  const category = document.getElementById("org-post-cat")?.value;
+  const membersOnly =
+    document.getElementById("org-post-privacy")?.value === "true";
 
   if (!title || !body || !category) {
-    showToast('Please fill in all required fields.');
+    showToast("Please fill in all required fields.");
     return;
   }
 
   try {
     const res = await fetch(`${API}/posts`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      credentials: 'include',
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      credentials: "include",
       body: JSON.stringify({
         type,
         scope: org.scope,
@@ -1208,13 +1221,13 @@ async function submitOrgPost() {
         body,
         org_id: org.id,
         event_id: eventId || null,
-        members_only: membersOnly
-      })
+        members_only: membersOnly,
+      }),
     });
 
     const data = await res.json();
     if (!res.ok) {
-      showToast(data.error || 'Could not post.');
+      showToast(data.error || "Could not post.");
       return;
     }
 
@@ -1222,8 +1235,8 @@ async function submitOrgPost() {
     showToast(`★ Posted to ${org.name}.`);
     openOrgDetail(currentOrgSlug, currentOrgFromPage);
   } catch (err) {
-    console.error('Submit org post error:', err);
-    showToast('Could not connect to server.');
+    console.error("Submit org post error:", err);
+    showToast("Could not connect to server.");
   }
 }
 
@@ -1238,7 +1251,8 @@ async function submitOrg() {
   // Read contribution amount (integer dollars, min 0)
   const contributionRaw = document.getElementById("org-contribution")?.value;
   let contributionDollars = parseInt(contributionRaw, 10);
-  if (isNaN(contributionDollars) || contributionDollars < 0) contributionDollars = 0;
+  if (isNaN(contributionDollars) || contributionDollars < 0)
+    contributionDollars = 0;
 
   if (!name || !description || !scope) {
     showToast("Please fill in all required fields.");
@@ -1286,18 +1300,19 @@ async function submitOrg() {
       const checkoutData = await checkoutRes.json();
 
       if (!checkoutRes.ok || !checkoutData.url) {
-        showToast(checkoutData.error || "Could not start checkout. Your org was saved; try again from the org page.");
+        showToast(
+          checkoutData.error ||
+            "Could not start checkout. Your org was saved; try again from the org page.",
+        );
         return;
       }
 
       // Redirect the whole window to Stripe's hosted checkout
       window.location.href = checkoutData.url;
-
     } catch (err) {
       console.error("Checkout error:", err);
       showToast("Could not connect to Stripe. Try again shortly.");
     }
-
   } catch (err) {
     console.error("Submit org error:", err);
     showToast("Could not connect to server.");
@@ -1684,13 +1699,18 @@ function switchOdTab(name, btn) {
 }
 
 async function openOrgDetail(slug, fromPage) {
-  console.log('[openOrgDetail] CALLED', new Date().toISOString(), { slug, fromPage }, new Error().stack);
+  console.log(
+    "[openOrgDetail] CALLED",
+    new Date().toISOString(),
+    { slug, fromPage },
+    new Error().stack,
+  );
   currentOrgSlug = slug;
   currentOrgFromPage = fromPage;
 
   // Read & strip ?contribution=success|canceled from URL before pushState
   const urlObj = new URL(window.location.href);
-  const contributionParam = urlObj.searchParams.get('contribution');
+  const contributionParam = urlObj.searchParams.get("contribution");
   // Always push a clean URL so the param doesn't persist on back/forward navigation
   window.history.pushState({ page: "org-detail", slug }, "", `/orgs/${slug}`);
 
@@ -1708,20 +1728,27 @@ async function openOrgDetail(slug, fromPage) {
 
     const { org, announcements, events } = data;
 
-     // Auto-activate if pending_payment and the viewer is the owner
+    // Auto-activate if pending_payment and the viewer is the owner
     // (covers: Stripe redirect back with cancel, stale pending from abandoned tab, etc.)
-    if (org.status === 'pending_payment' && loggedIn && currentUser?.id === org.created_by) {
+    if (
+      org.status === "pending_payment" &&
+      loggedIn &&
+      currentUser?.id === org.created_by
+    ) {
       try {
-        const actRes = await fetch(`${API}/orgs/${org.id}/activate-without-payment`, {
-          method: 'POST',
-          credentials: 'include'
-        });
+        const actRes = await fetch(
+          `${API}/orgs/${org.id}/activate-without-payment`,
+          {
+            method: "POST",
+            credentials: "include",
+          },
+        );
         const actData = await actRes.json();
         if (actData.activated) {
-          org.status = 'active';
+          org.status = "active";
         }
       } catch (err) {
-        console.error('Auto-activate error:', err);
+        console.error("Auto-activate error:", err);
       }
     }
 
@@ -1729,14 +1756,14 @@ async function openOrgDetail(slug, fromPage) {
     let orgPosts = [];
     try {
       const postsRes = await fetch(`${API}/posts?org_id=${org.id}`, {
-        credentials: 'include'
+        credentials: "include",
       });
       if (postsRes.ok) {
         const postsData = await postsRes.json();
         orgPosts = postsData.posts || [];
       }
     } catch (err) {
-      console.error('Load org posts error:', err);
+      console.error("Load org posts error:", err);
     }
 
     // Check membership status + role if logged in
@@ -1757,23 +1784,30 @@ async function openOrgDetail(slug, fromPage) {
 
     // Render org posts, grouped by General + per event
     const renderPostCard = (p) => {
-      const typeBadge = p.type === 'need'
-        ? '<span class="od-post-badge od-post-badge-need">NEED</span>'
-        : '<span class="od-post-badge od-post-badge-ability">ABILITY</span>';
+      const typeBadge =
+        p.type === "need"
+          ? '<span class="od-post-badge od-post-badge-need">NEED</span>'
+          : '<span class="od-post-badge od-post-badge-ability">ABILITY</span>';
 
-      let status = '';
+      let status = "";
       if (p.fulfilled_at) {
-        status = '<div class="od-post-status od-post-status-fulfilled">✓ Fulfilled</div>';
+        status =
+          '<div class="od-post-status od-post-status-fulfilled">✓ Fulfilled</div>';
       } else if (p.claimed_by) {
-        const claimerName = p.claimed_by === currentUser?.id
-          ? 'you'
-          : (p.claimer_name || p.claimer_username || 'someone');
+        const claimerName =
+          p.claimed_by === currentUser?.id
+            ? "you"
+            : p.claimer_name || p.claimer_username || "someone";
         status = `<div class="od-post-status od-post-status-claimed">✓ Claimed by ${claimerName}</div>`;
       }
 
-      let actionBtn = '';
+      let actionBtn = "";
       if (!p.fulfilled_at) {
-        if (p.type === 'need' && !p.claimed_by && p.user_id !== currentUser?.id) {
+        if (
+          p.type === "need" &&
+          !p.claimed_by &&
+          p.user_id !== currentUser?.id
+        ) {
           actionBtn = `<button class="od-post-btn" onclick="claimPost(${p.id})">I got this</button>`;
         } else if (p.claimed_by === currentUser?.id) {
           actionBtn = `<button class="od-post-btn od-post-btn-secondary" onclick="unclaimPost(${p.id})">Unclaim</button>`;
@@ -1806,41 +1840,50 @@ async function openOrgDetail(slug, fromPage) {
     };
 
     // Group posts: general (no event) + by event
-    const generalPosts = orgPosts.filter(p => !p.event_id);
+    const generalPosts = orgPosts.filter((p) => !p.event_id);
     const postsByEvent = {};
-    orgPosts.filter(p => p.event_id).forEach(p => {
-      if (!postsByEvent[p.event_id]) postsByEvent[p.event_id] = [];
-      postsByEvent[p.event_id].push(p);
-    });
+    orgPosts
+      .filter((p) => p.event_id)
+      .forEach((p) => {
+        if (!postsByEvent[p.event_id]) postsByEvent[p.event_id] = [];
+        postsByEvent[p.event_id].push(p);
+      });
 
     const generalSection = `
       <div class="od-post-section">
         <div class="od-post-section-hd">General</div>
-        ${generalPosts.length > 0
-          ? generalPosts.map(renderPostCard).join('')
-          : '<p class="od-empty">No general needs or abilities yet.</p>'}
+        ${
+          generalPosts.length > 0
+            ? generalPosts.map(renderPostCard).join("")
+            : '<p class="od-empty">No general needs or abilities yet.</p>'
+        }
       </div>
     `;
 
-    const eventSections = events.map(ev => {
-      const eventPosts = postsByEvent[ev.id] || [];
-      if (eventPosts.length === 0) return '';
-      return `
+    const eventSections = events
+      .map((ev) => {
+        const eventPosts = postsByEvent[ev.id] || [];
+        if (eventPosts.length === 0) return "";
+        return `
         <div class="od-post-section">
           <div class="od-post-section-hd">
             ${ev.title}
-            ${ev.event_date ? `<span class="od-post-section-date">${ev.event_date}</span>` : ''}
+            ${ev.event_date ? `<span class="od-post-section-date">${ev.event_date}</span>` : ""}
           </div>
-          ${eventPosts.map(renderPostCard).join('')}
+          ${eventPosts.map(renderPostCard).join("")}
         </div>
       `;
-    }).join('');
+      })
+      .join("");
 
-    const postBtn = memberStatus === 'active' ? `
+    const postBtn =
+      memberStatus === "active"
+        ? `
       <button class="od-post-create-btn" onclick="openModal('post-org')">
         + Post to ${org.name}
       </button>
-    ` : '';
+    `
+        : "";
 
     const postsHTML = postBtn + generalSection + eventSections;
     const openNeedsTotal = org.open_needs_count || 0;
@@ -1953,9 +1996,9 @@ async function openOrgDetail(slug, fromPage) {
     `
       : "";
 
-         // Build contribution banner if user is returning from Stripe
-    let contributionBanner = '';
-    if (contributionParam === 'success') {
+    // Build contribution banner if user is returning from Stripe
+    let contributionBanner = "";
+    if (contributionParam === "success") {
       contributionBanner = `
         <div class="contribution-banner contribution-banner-success">
           <span class="contribution-banner-mark">★</span>
@@ -1965,7 +2008,7 @@ async function openOrgDetail(slug, fromPage) {
           <button class="contribution-banner-close" onclick="this.parentElement.remove()" aria-label="Dismiss">×</button>
         </div>
       `;
-    } else if (contributionParam === 'canceled') {
+    } else if (contributionParam === "canceled") {
       contributionBanner = `
         <div class="contribution-banner contribution-banner-neutral">
           <span class="contribution-banner-mark">🌹</span>
@@ -2001,7 +2044,7 @@ async function openOrgDetail(slug, fromPage) {
               Events${evCount > 0 ? ` <span class="od-tab-badge">${evCount}</span>` : ""}
             </button>
             <button class="od-tab" onclick="switchOdTab('posts', this)">
-              Needs &amp; Offers${openNeedsTotal > 0 ? ` <span class="od-tab-badge">${openNeedsTotal}</span>` : ''}
+              Needs &amp; Offers${openNeedsTotal > 0 ? ` <span class="od-tab-badge">${openNeedsTotal}</span>` : ""}
             </button>
             ${membersTabBtn}
           </div>
@@ -2110,53 +2153,65 @@ async function rsvpEvent(orgId, eventId, btn) {
 }
 
 async function claimPost(postId) {
-  if (!loggedIn) { requireAuth(() => claimPost(postId)); return; }
+  if (!loggedIn) {
+    requireAuth(() => claimPost(postId));
+    return;
+  }
 
   try {
     const res = await fetch(`${API}/posts/${postId}/claim`, {
-      method: 'POST',
-      credentials: 'include'
+      method: "POST",
+      credentials: "include",
     });
     const data = await res.json();
-    if (!res.ok) { showToast(data.error || 'Could not claim.'); return; }
-    showToast('✓ Claimed. A thread was opened so you can coordinate.');
+    if (!res.ok) {
+      showToast(data.error || "Could not claim.");
+      return;
+    }
+    showToast("✓ Claimed. A thread was opened so you can coordinate.");
     openOrgDetail(currentOrgSlug, currentOrgFromPage);
   } catch (err) {
-    console.error('Claim error:', err);
-    showToast('Could not connect to server.');
+    console.error("Claim error:", err);
+    showToast("Could not connect to server.");
   }
 }
 
 async function unclaimPost(postId) {
   try {
     const res = await fetch(`${API}/posts/${postId}/claim`, {
-      method: 'DELETE',
-      credentials: 'include'
+      method: "DELETE",
+      credentials: "include",
     });
     const data = await res.json();
-    if (!res.ok) { showToast(data.error || 'Could not unclaim.'); return; }
-    showToast('Unclaimed.');
+    if (!res.ok) {
+      showToast(data.error || "Could not unclaim.");
+      return;
+    }
+    showToast("Unclaimed.");
     openOrgDetail(currentOrgSlug, currentOrgFromPage);
   } catch (err) {
-    console.error('Unclaim error:', err);
-    showToast('Could not connect to server.');
+    console.error("Unclaim error:", err);
+    showToast("Could not connect to server.");
   }
 }
 
 async function fulfillPost(postId) {
-  if (!confirm('Mark this post as fulfilled? This cannot be undone.')) return;
+  if (!confirm("Mark this post as fulfilled? This cannot be undone.")) return;
   try {
     const res = await fetch(`${API}/posts/${postId}/fulfill`, {
-      method: 'POST',
-      credentials: 'include'
+      method: "POST",
+      credentials: "include",
     });
     const data = await res.json();
-    if (!res.ok) { showToast(data.error || 'Could not fulfill.'); return; }
-    showToast('✓ Marked fulfilled. Thank you.');
+    if (!res.ok) {
+      showToast(data.error || "Could not fulfill.");
+      return;
+    }
+    showToast("✓ Marked fulfilled. Thank you.");
     openOrgDetail(currentOrgSlug, currentOrgFromPage);
   } catch (err) {
-    console.error('Fulfill error:', err);
-    showToast('Could not connect to server.');
+    console.error("Fulfill error:", err);
+    showToast("Could not connect to server.");
   }
 }
 
@@ -2542,8 +2597,6 @@ async function unbanUser(userId) {
   }
 }
 
-
-
 /* ── INIT ── */
 document.addEventListener("DOMContentLoaded", async () => {
   buildChains();
@@ -2705,12 +2758,12 @@ async function openPostDetail(postId) {
 
 async function viewProfile(username, push = true) {
   if (push) {
-  window.history.pushState(
-    { page: "profile", username },
-    "",
-    `/users/${username}`,
-  );
-}
+    window.history.pushState(
+      { page: "profile", username },
+      "",
+      `/users/${username}`,
+    );
+  }
   try {
     const res = await fetch(`${API}/users/${username}`, {
       credentials: "include",
@@ -2723,7 +2776,8 @@ async function viewProfile(username, push = true) {
       return;
     }
 
-    const { user, posts, vouches, thankYouNotes, completedHelps, vouchState } = data;
+    const { user, posts, vouches, thankYouNotes, completedHelps, vouchState } =
+      data;
     const initial = (user.display_name || user.username)
       .charAt(0)
       .toUpperCase();
@@ -2765,7 +2819,7 @@ async function viewProfile(username, push = true) {
           .join("")
       : '<p style="opacity:0.4">No active posts.</p>';
 
-   // Vouch action, based on the viewer's relationship to this person
+    // Vouch action, based on the viewer's relationship to this person
     let vouchAction = "";
     const vname = user.display_name || user.username;
     if (vouchState === "eligible") {
@@ -2950,7 +3004,7 @@ async function openThreadById(threadId) {
       ? thread.user_b_username
       : thread.user_a_username;
 
-  // Header action based on thread status
+    // Header action based on thread status
     const hdAction =
       thread.status === "complete"
         ? `<span class="inbox-complete-badge">✓ Fulfilled</span>`
@@ -2993,14 +3047,21 @@ async function openThreadById(threadId) {
     // Set current thread, then render compose or post-fulfillment actions
     window.currentThreadId = threadId;
     window.currentThreadOther = otherName;
+    window.currentThreadJob = thread.post_title || null;
     const compose = document.getElementById("inbox-compose");
     compose.style.display = "flex";
 
-    if (thread.status === "complete") {
+  if (thread.status === "complete") {
+      let noteBtn = "";
+      if (thread.post_id) {
+        noteBtn = thread.already_noted
+          ? `<button class="inbox-completion-btn" disabled>✓ Thank You Note Sent</button>`
+          : `<button class="inbox-completion-btn" onclick="openThankYouNote()">Leave a Thank You Note</button>`;
+      }
       compose.innerHTML = `
         <div class="inbox-post-completion">
           <p class="inbox-completion-label">Interaction fulfilled —</p>
-          <button class="inbox-completion-btn" onclick="openThankYouNote()">Leave a Thank You Note</button>
+          ${noteBtn}
         </div>
       `;
     } else {
@@ -3023,16 +3084,19 @@ async function openThreadById(threadId) {
 
 function openThankYouNote() {
   const name = window.currentThreadOther || "them";
-  const body = `
+  const job = window.currentThreadJob;
+  const reLine = job
+    ? `<p class="modal-sub">Re: <strong>${job}</strong> — for <strong>${name}</strong>.</p>`
+    : `<p class="modal-sub">For <strong>${name}</strong>.</p>`;
+  document.getElementById("modal-body").innerHTML = `
     <div class="modal-title">Leave a Thank You Note</div>
-    <p class="modal-sub">For <strong>${name}</strong>. Short, human, honest.</p>
+    ${reLine}
     <div class="form-field">
       <textarea class="form-textarea" id="thankyou-text" placeholder="What did they do? What did it mean to you?" rows="4"></textarea>
     </div>
-    <p class="form-hint">Thank you notes appear on ${name}'s public profile.</p>
+    <p class="form-hint">This note appears on ${name}'s public profile, labeled with the job.</p>
     <button class="form-submit" onclick="submitThankYou()">Send Thank You Note →</button>
   `;
-  document.getElementById("modal-body").innerHTML = body;
   document.getElementById("overlay").classList.add("open");
   setTimeout(() => document.getElementById("thankyou-text")?.focus(), 100);
 }
@@ -3044,12 +3108,15 @@ async function submitThankYou() {
     return;
   }
   try {
-    const res = await fetch(`${API}/threads/${window.currentThreadId}/thank-you`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      credentials: "include",
-      body: JSON.stringify({ body: text }),
-    });
+    const res = await fetch(
+      `${API}/threads/${window.currentThreadId}/thank-you`,
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({ body: text }),
+      },
+    );
     const data = await res.json();
     if (!res.ok) {
       showToast(data.error || "Could not send note.");
@@ -3057,6 +3124,7 @@ async function submitThankYou() {
     }
     closeModal();
     showToast("✿ Thank you note sent.");
+    if (window.currentThreadId) openThreadById(window.currentThreadId);
   } catch (err) {
     console.error("Thank you note error:", err);
     showToast("Could not connect to server.");

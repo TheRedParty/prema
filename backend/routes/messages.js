@@ -123,6 +123,13 @@ router.get('/threads/:id', requireAuth, async (req, res) => {
       [req.params.id, req.session.userId]
     );
 
+    // Has the current user already left a thank you note for this job?
+    const noteCheck = await db.query(
+      'SELECT 1 FROM thank_you_notes WHERE thread_id = $1 AND author_id = $2 AND is_removed = FALSE',
+      [req.params.id, req.session.userId]
+    );
+    t.already_noted = noteCheck.rows.length > 0;
+
     res.json({ thread: t, messages: messages.rows });
 
   } catch (err) {
@@ -230,13 +237,30 @@ router.post('/threads/:id/thank-you', requireAuth, async (req, res) => {
       return res.status(403).json({ error: 'Access denied' });
     }
 
-    const recipient_id = t.participant_a === req.session.userId 
-      ? t.participant_b 
+    if (t.status !== 'complete') {
+      return res.status(400).json({ error: 'You can only thank someone after a completed interaction' });
+    }
+
+    if (!t.post_id) {
+      return res.status(400).json({ error: 'Thank you notes are tied to a specific job' });
+    }
+
+    // Once per job
+    const existing = await db.query(
+      'SELECT 1 FROM thank_you_notes WHERE thread_id = $1 AND author_id = $2 AND is_removed = FALSE',
+      [req.params.id, req.session.userId]
+    );
+    if (existing.rows.length > 0) {
+      return res.status(400).json({ error: 'You have already left a thank you note for this job' });
+    }
+
+    const recipient_id = t.participant_a === req.session.userId
+      ? t.participant_b
       : t.participant_a;
 
     await db.query(
-      `INSERT INTO thank_you_notes (thread_id, author_id, recipient_id, body, is_anonymous)
-       VALUES ($1, $2, $3, $4, $5)`,
+      `INSERT INTO thank_you_notes (thread_id, author_id, recipient_id, body, is_anonymous, is_displayed)
+       VALUES ($1, $2, $3, $4, $5, TRUE)`,
       [req.params.id, req.session.userId, recipient_id, body.trim(), is_anonymous || false]
     );
 
