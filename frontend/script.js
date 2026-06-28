@@ -2852,7 +2852,8 @@ async function viewProfile(username, push = true) {
       ? thankYouNotes
           .map(
             (n) => `
-      <div class="profile-thank">
+     <div class="profile-thank">
+        ${n.job_title ? `<div class="profile-thank-re">Re: ${n.job_title}</div>` : ""}
         <p class="profile-thank-note">"${n.body}"</p>
         <div class="profile-thank-from">— ${n.author_name}, ${new Date(n.created_at).toLocaleDateString()}</div>
       </div>

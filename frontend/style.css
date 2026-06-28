@@ -1712,6 +1712,13 @@ nav {
   color: rgba(237,224,196,0.35);
   text-transform: uppercase;
 }
+.profile-thank-re {
+  color: #C9A84C;
+  font-size: 0.7rem;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  margin-bottom: 0.35rem;
+}
 
 /* Profile modal (quick card) */
 .profile-modal-wrap {

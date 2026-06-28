@@ -49,12 +49,15 @@ router.get('/:username', async (req, res) => {
 
     // Get thank you notes (only displayed ones)
     const thankYouNotes = await db.query(
-      `SELECT thank_you_notes.*, 
-        CASE WHEN thank_you_notes.is_anonymous THEN 'Anonymous' 
-             ELSE users.display_name 
-        END as author_name
+      `SELECT thank_you_notes.*,
+        CASE WHEN thank_you_notes.is_anonymous THEN 'Anonymous'
+             ELSE users.display_name
+        END as author_name,
+        posts.title as job_title
        FROM thank_you_notes
        JOIN users ON thank_you_notes.author_id = users.id
+       LEFT JOIN threads ON thank_you_notes.thread_id = threads.id
+       LEFT JOIN posts ON threads.post_id = posts.id
        WHERE thank_you_notes.recipient_id = $1
        AND thank_you_notes.is_displayed = TRUE
        AND thank_you_notes.is_removed = FALSE
