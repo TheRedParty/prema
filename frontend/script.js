@@ -3057,7 +3057,7 @@ async function openThreadById(threadId) {
       if (thread.post_id) {
         noteBtn = thread.already_noted
           ? `<button class="inbox-completion-btn" disabled>✓ Thank You Note Sent</button>`
-          : `<button class="inbox-completion-btn" onclick="openThankYouNote()">Leave a Thank You Note</button>`;
+          : `<button class="inbox-completion-btn" onclick="sendThankYou()">Leave a Thank You Note</button>`;
       }
       compose.innerHTML = `
         <div class="inbox-post-completion">
@@ -3102,7 +3102,7 @@ function openThankYouNote() {
   setTimeout(() => document.getElementById("thankyou-text")?.focus(), 100);
 }
 
-async function submitThankYou() {
+async function sendThankYou() {
   const text = document.getElementById("thankyou-text")?.value.trim();
   if (!text) {
     showToast("Write a few words first.");
