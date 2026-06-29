@@ -3057,7 +3057,7 @@ async function openThreadById(threadId) {
       if (thread.post_id) {
         noteBtn = thread.already_noted
           ? `<button class="inbox-completion-btn" disabled>✓ Thank You Note Sent</button>`
-          : `<button class="inbox-completion-btn" onclick="sendThankYou()">Leave a Thank You Note</button>`;
+          : `<button class="inbox-completion-btn" onclick="openThankYouNote()">Leave a Thank You Note</button>`;
       }
       compose.innerHTML = `
         <div class="inbox-post-completion">
@@ -3096,7 +3096,7 @@ function openThankYouNote() {
       <textarea class="form-textarea" id="thankyou-text" placeholder="What did they do? What did it mean to you?" rows="4"></textarea>
     </div>
     <p class="form-hint">This note appears on ${name}'s public profile, labeled with the job.</p>
-    <button class="form-submit" onclick="submitThankYou()">Send Thank You Note →</button>
+    <button class="form-submit" onclick="sendThankYou()">Send Thank You Note →</button>
   `;
   document.getElementById("overlay").classList.add("open");
   setTimeout(() => document.getElementById("thankyou-text")?.focus(), 100);
