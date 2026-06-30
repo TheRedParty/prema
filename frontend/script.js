@@ -3197,107 +3197,7 @@ async function respondToPost(userId, posterName, postTitle) {
   }
 }
 
-function confirmMarkDone(idx) {
-  const thread = inboxThreads[idx];
-  const body = `
-    <div class="modal-title">Mark as Done?</div>
-    <p class="modal-sub">You're marking your interaction with <strong>${thread.name}</strong> as complete.</p>
-    <p class="form-hint">Both of you will be asked to confirm. Once confirmed, thank you notes and vouching unlock.</p>
-    <button class="form-submit" onclick="markDone(${idx})">Yes, we're done →</button>
-  `;
-  document.getElementById("modal-body").innerHTML = body;
-  document.getElementById("overlay").classList.add("open");
-}
 
-function markDone(idx) {
-  closeModal();
-  const thread = inboxThreads[idx];
-  thread.status = "complete";
-  thread.messages.push({
-    system: true,
-    complete: true,
-    text: "This interaction is complete. You can leave a thank you note or vouch for each other below.",
-  });
-  openThread(idx);
-  showToast("★ Marked as done. Thank you notes and vouching are now unlocked.");
-}
-
-function openThankYouModal(idx) {
-  const thread = inboxThreads[idx];
-  const body = `
-    <div class="modal-title">Leave a Thank You Note</div>
-    <p class="modal-sub">For <strong>${thread.name}</strong>. Short, human, honest.</p>
-    <div class="form-field">
-      <textarea class="form-textarea" id="thankyou-text" placeholder="What did they do? What did it mean to you?" rows="4"></textarea>
-    </div>
-    <div class="form-field">
-      <label class="form-label">Post as</label>
-      <div class="signup-options" style="gap:0.35rem">
-        <label class="signup-option" style="padding:0.5rem 0.75rem">
-          <input type="radio" name="ty-anon" value="named" checked>
-          <span style="font-size:0.72rem">My name (${currentUser ? currentUser.name : "You"})</span>
-        </label>
-        <label class="signup-option" style="padding:0.5rem 0.75rem">
-          <input type="radio" name="ty-anon" value="anon">
-          <span style="font-size:0.72rem">Community member (anonymous)</span>
-        </label>
-      </div>
-    </div>
-    <p class="form-hint">The recipient chooses whether to display it on their profile. Once posted you can't edit it.</p>
-    <button class="form-submit" onclick="submitThankYou(${idx})">Send Note →</button>
-  `;
-  document.getElementById("modal-body").innerHTML = body;
-  document.getElementById("overlay").classList.add("open");
-}
-
-function submitThankYou(idx) {
-  const text = document.getElementById("thankyou-text")?.value.trim();
-  if (!text) {
-    showToast("Write something first.");
-    return;
-  }
-  const thread = inboxThreads[idx];
-  closeModal();
-  showToast("Thank you note sent to " + thread.name + ".");
-}
-
-function openVouchModal(idx) {
-  const thread = inboxThreads[idx];
-  const body = `
-    <div class="modal-title">Vouch for ${thread.name}</div>
-    <p class="modal-sub">A vouch says: I have worked with this person and I stand behind them.</p>
-    <div class="form-field">
-      <label class="form-label">Add a note <span style="opacity:0.5;font-weight:400;text-transform:none;letter-spacing:0">(optional but meaningful)</span></label>
-      <textarea class="form-textarea" id="vouch-note" placeholder="What was it like working with them? What would you want others to know?" rows="3"></textarea>
-    </div>
-    <p class="form-hint">Vouches are visible on their public profile. You can only vouch once per completed interaction.</p>
-    <button class="form-submit" onclick="submitVouch(${idx})">Vouch for ${thread.name} →</button>
-  `;
-  document.getElementById("modal-body").innerHTML = body;
-  document.getElementById("overlay").classList.add("open");
-}
-
-function submitVouch(idx) {
-  const thread = inboxThreads[idx];
-  closeModal();
-  showToast(
-    "★ You vouched for " + thread.name + ". It will appear on their profile.",
-  );
-}
-
-function openThread(idx) {
-  activeThread = idx;
-  document.querySelectorAll(".inbox-thread").forEach((el, i) => {
-    el.classList.toggle("active", i === idx);
-  });
-  const dot = document.querySelectorAll(".inbox-unread-dot")[idx];
-  if (dot) dot.remove();
-
-  const thread = inboxThreads[idx];
-  document.querySelector(".inbox-thread-hd-avatar").textContent =
-    thread.initial;
-  document.querySelector(".inbox-thread-hd-name").textContent = thread.name;
-  document.querySelector(".inbox-thread-hd-re").textContent = thread.re;
 
   // Render header action button based on status
   const hdInfo = document.querySelector(".inbox-thread-hd-info");
@@ -3368,7 +3268,7 @@ function openThread(idx) {
       <button class="inbox-compose-send" onclick="sendMessage()">Send →</button>
     `;
   }
-}
+
 
 async function sendMessage() {
   const input = document.getElementById("inbox-compose-input");
